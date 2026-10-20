@@ -487,17 +487,17 @@ body.wall .stile .sv{font-size:24px}
 <div class="grid g-wind wallhide" id="grid-winds">
   <section class="panel" id="wp-KSC">
     <div class="ph"><h2>Kennedy towers</h2><span class="lvl" id="wl-KSC" hidden></span><span class="meta" id="wm-KSC">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="KSC"><thead><tr><th data-k="tower">Tower</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th><th data-k="hgt">Hgt</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="KSC"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section class="panel" id="wp-CCSFS">
     <div class="ph"><h2>Cape towers</h2><span class="lvl" id="wl-CCSFS" hidden></span><span class="meta" id="wm-CCSFS">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="CCSFS"><thead><tr><th data-k="tower">Tower</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th><th data-k="hgt">Hgt</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="CCSFS"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
   </section>
 </div>
 <div class="grid wallhide" id="otherRow" hidden>
   <section class="panel" id="wp-OTHER">
     <div class="ph"><h2>Other towers</h2><span class="lvl" id="wl-OTHER" hidden></span><span class="meta" id="wm-OTHER">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="OTHER"><thead><tr><th data-k="tower">Tower</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th><th data-k="hgt">Hgt</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="OTHER"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
   </section>
 </div>
 
@@ -1239,7 +1239,7 @@ function renderLog(){ const now=Date.now(); const list=[...strikes.values()].fil
 function renderLightning(){ try{ computeStorms(); }catch(e){} renderRings(); renderMap(); renderLog(); if(measure) renderMeasure(); }
 
 /* ---------------- Rendering: winds ---------------- */
-let sortK="tower", sortDir=1;
+let sortK="hgt", sortDir=-1;   // default: tallest sensor first
 const cmpTower=(a,b)=> a.tower===b.tower ? (b.hgt||0)-(a.hgt||0) : (a.tower>b.tower?1:-1);
 const SITES = [["KSC","Kennedy"],["CCSFS","Cape"],["OTHER","Other"]];
 const list = v => String(v||"").split(/[\s,]+/).filter(Boolean);
@@ -1253,9 +1253,9 @@ function renderWinds(){ const u=S.units; const all=Object.values(towers);
   const groups={KSC:[],CCSFS:[],OTHER:[]}; for(const r of all) groups[siteOf(r)].push(r);
   for(const [site,label] of SITES){ const rows=groups[site];
     const tb=document.querySelector(`.windTable[data-site="${site}"] tbody`);
-    tb.innerHTML = rows.length? rows.map(r=>`<tr data-t="${esc(r.key)}" class="${r.key===S.tower?"sel":""}"><td>${esc(r.tower)}${watched(r.key)?"":' <span style="color:var(--dim)" title="Not on the alert list">·</span>'}</td><td>${Number.isFinite(r.t)?hhmmZ(r.t):"—"}</td>
+    tb.innerHTML = rows.length? rows.map(r=>`<tr data-t="${esc(r.key)}" class="${r.key===S.tower?"sel":""}"><td>${esc(r.tower)}${watched(r.key)?"":' <span style="color:var(--dim)" title="Not on the alert list">·</span>'}</td><td>${fmt(r.hgt)}</td><td>${Number.isFinite(r.t)?hhmmZ(r.t):"—"}</td>
        <td>${r.dir==null?"—":`<span class="dirarrow" style="transform:rotate(${r.dir+180}deg)">↑</span>${String(Math.round(r.dir)).padStart(3,"0")}° ${comp(r.dir)}`}</td>
-       <td class="${cellL(r.avg,"avg")}">${fmt(r.avg,1)}</td><td class="${cellL(r.pk1,"pk")}">${fmt(r.pk1,1)}</td><td>${fmt(r.pk10,1)}</td><td>${fmt(r.tmp,1)}</td><td>${fmt(r.hgt)}</td></tr>`).join("")
+       <td class="${cellL(r.avg,"avg")}">${fmt(r.avg,1)}</td><td class="${cellL(r.pk1,"pk")}">${fmt(r.pk1,1)}</td><td>${fmt(r.pk10,1)}</td><td>${fmt(r.tmp,1)}</td></tr>`).join("")
       : `<tr><td colspan="8" class="empty" style="font-family:var(--f-ui)">${!S.src.winds ? "Winds feed is off." : all.length? `No ${label} towers reporting.` : "Waiting for tower readings."}</td></tr>`;
     tb.querySelectorAll("tr[data-t]").forEach(tr=>tr.onclick=async()=>{ S.tower=tr.dataset.t; save(); renderWinds(); const t=towerSites().find(x=>x.tower===tr.dataset.t.split("@")[0]); if(t){ use(TM); if(view){ view.u=U(t.lon); view.v=V(t.lat); TM.view=view; } renderTowerMap(); } await refreshSeries(); renderChart(); });
     const newest = rows.reduce((m,r)=>Number.isFinite(r.t)?Math.max(m,r.t):m,0);

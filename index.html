@@ -1239,8 +1239,9 @@ function renderLog(){ const now=Date.now(); const list=[...strikes.values()].fil
 function renderLightning(){ try{ computeStorms(); }catch(e){} renderRings(); renderMap(); renderLog(); if(measure) renderMeasure(); }
 
 /* ---------------- Rendering: winds ---------------- */
-let sortK="hgt", sortDir=-1;   // default: tallest sensor first
-const cmpTower=(a,b)=> a.tower===b.tower ? (b.hgt||0)-(a.hgt||0) : (a.tower>b.tower?1:-1);
+let sortK="tower", sortDir=1;   // default: grouped by tower (numbered towers first, lettered after), tallest sensor first within each
+const cmpName=(x,y)=>{ const nx=/^\d+$/.test(x), ny=/^\d+$/.test(y); if(nx!==ny) return nx? -1 : 1; return nx? (+x)-(+y) || x.localeCompare(y) : x.localeCompare(y,undefined,{numeric:true,sensitivity:"base"}); };
+const cmpTower=(a,b)=> a.tower===b.tower ? (b.hgt||0)-(a.hgt||0) : cmpName(String(a.tower),String(b.tower));
 const SITES = [["KSC","Kennedy"],["CCSFS","Cape"],["OTHER","Other"]];
 const list = v => String(v||"").split(/[\s,]+/).filter(Boolean);
 function siteOf(r){ if(list(S.ksc).includes(r.tower)) return "KSC"; if(list(S.ccsfs).includes(r.tower)) return "CCSFS";

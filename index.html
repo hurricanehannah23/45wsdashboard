@@ -135,6 +135,7 @@ td.warn{color:var(--warn);font-weight:600} td.crit{color:var(--crit);font-weight
 
 #chart{width:100%;height:220px;display:block}
 #netChart{width:100%;height:320px;display:block}
+.ntg[aria-pressed="true"]{border-color:var(--accent);color:var(--fg);background:var(--raised)} .ntg[aria-pressed="false"]{color:var(--dim)}
 .tdtrend{border-top:1px solid var(--line);padding:10px 8px 4px}
 .tdtrend .tdh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px 6px}
 .tdtrend .ldl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:auto}
@@ -513,6 +514,10 @@ body.wall .stile .sv{font-size:24px}
 <div class="grid wallhide">
   <section class="panel">
     <div class="ph"><h2>Wind trend · highest of all towers</h2><span class="meta" id="netMeta"></span>
+      <button type="button" class="btn sm ntg" id="nt-ksc" aria-pressed="true">Kennedy</button>
+      <button type="button" class="btn sm ntg" id="nt-ccsfs" aria-pressed="true">Cape</button>
+      <button type="button" class="btn sm ntg" id="nt-sus" aria-pressed="true">Sustained</button>
+      <button type="button" class="btn sm ntg" id="nt-pk" aria-pressed="true">Peak</button>
       <div class="seg" id="segNetLvl" aria-label="Sensor heights"></div>
       <div class="seg" id="segNetHrs" aria-label="Time window"></div>
     </div>
@@ -628,7 +633,7 @@ const DEFAULTS = {
   wthr: { pk:{watch:null, strong:35, damaging:50}, avg:{watch:18, strong:null, damaging:null} },
   sound: true, notif: true, vib: true,
   src: {c2g:true, c2c:true, winds:true, efm:true}, showCG: true, showCC: true, showRings: true, showNames: true, showTowers: true, showWarn: true, nwsNm: 100, staleL: 3, staleW: 5, op: "", logFilter: "all",
-  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, tower: "", region: "rings", base: "sat"
+  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, netShow: {ksc:true, ccsfs:true, sus:true, pk:true}, tower: "", region: "rings", base: "sat"
 };
 const LS = "capeLW.v1", TEAMK = LS+".team";
 // Settings layers: built-in defaults < team defaults (settings.json beside the page) < this browser's own changes
@@ -1305,22 +1310,27 @@ function renderThrBar(){ const T=S.wthr, u=S.units, v=x=>x==null?"":x;
 const net = new Map();   // minute (ms) -> { "<height ft>": [maxAvg, maxPeak, towerAvg, towerPeak] }
 let netCovered = Infinity, netFilling = false;
 function netAdd(r){ if(!hasWind(r) || !Number.isFinite(r.t)) return; const m=Math.floor(r.t/60000)*60000; let p=net.get(m); if(!p){ p={}; net.set(m,p); }
-  const hk = r.hgt==null ? "?" : String(Math.round(r.hgt)), e = p[hk] || (p[hk]=[null,null,"",""]);
+  const hk = siteOf(r)+"|"+(r.hgt==null ? "?" : String(Math.round(r.hgt))), e = p[hk] || (p[hk]=[null,null,"",""]);
   if(r.avg!=null && (e[0]==null || r.avg>e[0])){ e[0]=r.avg; e[2]=r.tower; }
   if(r.pk1!=null && (e[1]==null || r.pk1>e[1])){ e[1]=r.pk1; e[3]=r.tower; } }
 function netPrune(){ const cut=Date.now()-13*3600e3; for(const t of net.keys()) if(t<cut) net.delete(t); }
+const NETS = [ {k:"ka", site:"KSC",   m:0, name:"Kennedy sustained", col:"#6cb6ff", dash:[]},
+               {k:"kp", site:"KSC",   m:1, name:"Kennedy peak",      col:"#6cb6ff", dash:[7,4]},
+               {k:"ca", site:"CCSFS", m:0, name:"Cape sustained",    col:"#e9a23b", dash:[]},
+               {k:"cp", site:"CCSFS", m:1, name:"Cape peak",         col:"#e9a23b", dash:[7,4]} ];
+const netOn = n => (S.netShow||{})[n.site==="KSC"?"ksc":"ccsfs"] && (S.netShow||{})[n.m? "pk" : "sus"];
 function netSeries(){ const t0=Date.now()-S.netHrs*3600e3, out=[];
-  for(const t of [...net.keys()].sort((a,b)=>a-b)){ if(t<t0) continue; const p=net.get(t); let a=null,pk=null,ta="",tp="";
-    for(const [hk,e] of Object.entries(p)){ const h=+hk, agl=Number.isFinite(h) && h>S.sfcMax;
+  for(const t of [...net.keys()].sort((a,b)=>a-b)){ if(t<t0) continue; const p=net.get(t), r={t}; let any=false;
+    for(const [key,e] of Object.entries(p)){ const [site,hk]=key.includes("|")? key.split("|") : ["?",key]; const h=+hk, agl=Number.isFinite(h) && h>S.sfcMax;
       if(S.netLvl==="sfc" && agl) continue; if(S.netLvl==="agl" && !agl) continue;
-      if(e[0]!=null && (a==null || e[0]>a)){ a=e[0]; ta=`${e[2]} · ${hk} ft`; }
-      if(e[1]!=null && (pk==null || e[1]>pk)){ pk=e[1]; tp=`${e[3]} · ${hk} ft`; } }
-    if(a!=null || pk!=null) out.push({t, a, p:pk, ta, tp}); }
-  // smoothing: trailing average over the last S.netSmooth minutes
-  const W=S.netSmooth*60000; let i0=0, sa=0, na=0, sp=0, np=0;
-  for(let i=0;i<out.length;i++){ const r=out[i]; if(r.a!=null){ sa+=r.a; na++; } if(r.p!=null){ sp+=r.p; np++; }
-    while(out[i0].t <= r.t-W){ const o=out[i0]; if(o.a!=null){ sa-=o.a; na--; } if(o.p!=null){ sp-=o.p; np--; } i0++; }
-    r.sa = na? sa/na : null; r.sp = np? sp/np : null; }
+      for(const n of NETS){ if(n.site!==site) continue; const v=e[n.m]; if(v!=null && (r[n.k]==null || v>r[n.k])){ r[n.k]=v; r[n.k+"t"]=`${e[n.m+2]} · ${hk} ft`; any=true; } } }
+    if(any) out.push(r); }
+  // smoothing: trailing average over the last S.netSmooth minutes, per line
+  const W=S.netSmooth*60000;
+  for(const n of NETS){ let i0=0, sum=0, cnt=0;
+    for(let i=0;i<out.length;i++){ const v=out[i][n.k]; if(v!=null){ sum+=v; cnt++; }
+      while(out[i0].t <= out[i].t-W){ const o=out[i0][n.k]; if(o!=null){ sum-=o; cnt--; } i0++; }
+      out[i]["s"+n.k] = cnt? sum/cnt : null; } }
   return out; }
 // Load older readings for the network chart (in 30-minute pieces so each request stays small)
 async function netBackfill(){ if(netFilling || !S.src.winds) return;
@@ -1341,9 +1351,9 @@ function renderNet(){ const cv=netCv, dpr=window.devicePixelRatio||1, w=cv.clien
   const mono=getComputedStyle(document.body).getPropertyValue("--f-mono"), T=S.wthr, pl=38, pr=12, pt=10, pb=24, iw=w-pl-pr, ih=h-pt-pb;
   const now=Date.now(), t0=now-S.netHrs*3600e3, d=netSeries(), u=S.units;
   const last=d[d.length-1], lvlName={all:"all heights",sfc:`surface (≤ ${S.sfcMax} ft)`,agl:`above ground (> ${S.sfcMax} ft)`}[S.netLvl];
-  $("#netLegend").innerHTML=`<span><span class="sw" style="background:#6cb6ff"></span>Highest sustained (1-min avg)</span><span><span class="sw" style="background:#e9a23b"></span>Highest peak (1-min)</span><span><span class="sw" style="background:#8a98a0;height:2px"></span>Faint lines: each minute · bold: ${S.netSmooth}-min average</span>${LEVELS.map(l=>`<span><span class="sw" style="background:${WL[l].col};height:2px"></span>${WL[l].name}</span>`).join("")}`;
-  $("#netMeta").textContent = !S.src.winds? "Winds feed is off" : last? `${lvlName} · now ${fmt(last.a)} sustained (${last.ta}), ${fmt(last.p)} peak (${last.tp}) ${u}${netFilling?" · loading earlier readings…":""}` : (netFilling? "Loading readings…" : "Waiting for readings");
-  const dmax=Math.max(0,...d.map(r=>r.p??r.a??0));
+  $("#netLegend").innerHTML = NETS.map(n=>`<span style="${netOn(n)?"":"opacity:.35"}"><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="${n.col}" stroke-width="2.4" stroke-dasharray="${n.dash.join(",")}"/></svg>${n.name}</span>`).join("")+`<span>Bold: ${S.netSmooth}-min average of the highest tower each minute · faint: each minute</span>`+LEVELS.map(l=>`<span><span class="sw" style="background:${WL[l].col};height:2px"></span>${WL[l].name}</span>`).join("");
+  $("#netMeta").textContent = !S.src.winds? "Winds feed is off" : last? `${lvlName} · now Kennedy ${fmt(last.ka)}/${fmt(last.kp)} · Cape ${fmt(last.ca)}/${fmt(last.cp)} ${u} (sustained/peak)${netFilling?" · loading earlier readings…":""}` : (netFilling? "Loading readings…" : "Waiting for readings");
+  const dmax=Math.max(0,...d.map(r=>Math.max(...NETS.filter(netOn).map(n=>r[n.k]??0),0)));
   let ymax=Math.max(T.pk.strong??0, dmax, (T.pk.damaging!=null && dmax>T.pk.damaging*0.7)? T.pk.damaging : 0, 10)*1.12; const step=ymax>60?20:ymax>30?10:5; ymax=Math.ceil(ymax/step)*step;
   const X=t=>pl+(t-t0)/(now-t0)*iw, Y=v=>pt+ih-v/ymax*ih;
   c.font="11px "+mono; c.strokeStyle="#1f2a31"; c.fillStyle="#7a8a93"; c.lineWidth=1; c.textAlign="right";
@@ -1354,19 +1364,17 @@ function renderNet(){ const cv=netCv, dpr=window.devicePixelRatio||1, w=cv.clien
   for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null||v>ymax) continue; c.strokeStyle=WL[l].col+(kind==="pk"?"cc":"77"); c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); c.fillStyle=WL[l].col; c.fillText(l==="watch"? WL[l].name : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`,pl+4,Y(v)-3); }
   if(!d.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText(!S.src.winds?"Winds feed is off.":"Waiting for tower readings.",pl+iw/2,pt+ih/2); return; }
   const path=(k)=>{ c.beginPath(); let on=false; for(const r of d){ if(r[k]==null){ on=false; continue; } const x=X(r.t), y=Y(r[k]); if(!on){ c.moveTo(x,y); on=true; } else c.lineTo(x,y); } };
-  // raw per-minute maxima (faint)
-  path("p"); c.strokeStyle="rgba(233,162,59,.35)"; c.lineWidth=1; c.stroke();
-  path("a"); c.strokeStyle="rgba(108,182,255,.35)"; c.lineWidth=1; c.stroke();
-  // smoothed trends (bold) with a soft fill under the sustained line
-  const sus=d.filter(r=>r.sa!=null); if(sus.length){ c.beginPath(); sus.forEach((r,i)=>{ const x=X(r.t),y=Y(r.sa); i?c.lineTo(x,y):c.moveTo(x,y); }); c.lineTo(X(sus[sus.length-1].t),Y(0)); c.lineTo(X(sus[0].t),Y(0)); c.closePath(); c.fillStyle="rgba(108,182,255,.10)"; c.fill(); }
-  path("sp"); c.strokeStyle="#e9a23b"; c.lineWidth=2.4; c.stroke();
-  path("sa"); c.strokeStyle="#6cb6ff"; c.lineWidth=2.4; c.stroke();
-  for(const [k,col] of [["sp","#e9a23b"],["sa","#6cb6ff"]]){ const L=[...d].reverse().find(r=>r[k]!=null); if(L){ c.fillStyle=col; c.beginPath(); c.arc(X(L.t),Y(L[k]),3.5,0,Math.PI*2); c.fill(); } }
+  const shown=NETS.filter(netOn);
+  if(!shown.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText("Turn on Kennedy or Cape, and Sustained or Peak.",pl+iw/2,pt+ih/2); return; }
+  for(const n of shown){ path(n.k); c.setLineDash(n.dash); c.strokeStyle=n.col+"55"; c.lineWidth=1; c.stroke(); }           // each minute (faint)
+  for(const n of shown){ path("s"+n.k); c.setLineDash(n.dash); c.strokeStyle="rgba(0,0,0,.6)"; c.lineWidth=4.4; c.stroke(); c.strokeStyle=n.col; c.lineWidth=2.4; c.stroke(); }   // smoothed (bold)
+  c.setLineDash([]);
+  for(const n of shown){ const L=[...d].reverse().find(r=>r["s"+n.k]!=null); if(L){ c.fillStyle=n.col; c.beginPath(); c.arc(X(L.t),Y(L["s"+n.k]),3.5,0,Math.PI*2); c.fill(); } }
   if(netHover!=null){ let best=null; for(const r of d) if(!best || Math.abs(r.t-netHover)<Math.abs(best.t-netHover)) best=r;
     if(best){ const x=X(best.t); c.strokeStyle="#cfdbe066"; c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke();
-      const lines=[`${hhmmZ(best.t)}`, `Sustained ${fmt(best.a,1)} ${u} · ${best.ta}  (avg ${fmt(best.sa,1)})`, `Peak ${fmt(best.p,1)} ${u} · ${best.tp}  (avg ${fmt(best.sp,1)})`];
+      const lines=[`${hhmmZ(best.t)}`, ...shown.map(n=>`${n.name} ${fmt(best[n.k],1)} ${u} · ${best[n.k+"t"]||"—"}  (avg ${fmt(best["s"+n.k],1)})`)];
       c.font="11px "+mono; const tw=Math.max(...lines.map(l=>c.measureText(l).width))+14, bx=Math.min(Math.max(x+10,pl), w-pr-tw);
-      c.fillStyle="#0d1316ee"; c.fillRect(bx,pt+4,tw,52); c.fillStyle="#d8e2e7"; lines.forEach((l,i)=>c.fillText(l,bx+7,pt+19+i*15)); } } }
+      c.fillStyle="#0d1316ee"; c.fillRect(bx,pt+4,tw,lines.length*15+8); c.fillStyle="#d8e2e7"; lines.forEach((l,i)=>c.fillText(l,bx+7,pt+19+i*15)); } } }
 netCv.addEventListener("pointermove",e=>{ const w=netCv.clientWidth, pl=38, pr=12, now=Date.now(), t0=now-S.netHrs*3600e3; netHover=t0+(e.offsetX-pl)/(w-pl-pr)*(now-t0); renderNet(); });
 netCv.addEventListener("pointerleave",()=>{ netHover=null; renderNet(); });
 
@@ -1446,6 +1454,8 @@ seg($("#segRadar"), [[0,"KMLB"],[1,"Mosaic"]], S.radar==="mos"?1:0, v=>{ S.radar
 setInterval(renderRadarStatus, 20000);
 seg($("#segWin"), [[15,"15m"],[30,"30m"],[60,"60m"]], S.mapWin, v=>{ S.mapWin=v; save(); renderMap(); });
 seg($("#segNetHrs"), [[1,"1h"],[3,"3h"],[6,"6h"],[12,"12h"]], S.netHrs, v=>{ S.netHrs=v; save(); renderNet(); netBackfill(); });
+for(const [id,key] of [["#nt-ksc","ksc"],["#nt-ccsfs","ccsfs"],["#nt-sus","sus"],["#nt-pk","pk"]]){ const b=$(id); b.setAttribute("aria-pressed",String(!!S.netShow[key]));
+  b.onclick=()=>{ S.netShow={...S.netShow,[key]:!S.netShow[key]}; save(); b.setAttribute("aria-pressed",String(S.netShow[key])); renderNet(); }; }
 seg($("#segNetLvl"), [[0,"All"],[1,"Surface"],[2,"Above ground"]], ["all","sfc","agl"].indexOf(S.netLvl), v=>{ S.netLvl=["all","sfc","agl"][v]; save(); renderNet(); });
 seg($("#segHrs"), [[1,"1h"],[3,"3h"],[6,"6h"],[12,"12h"],[24,"24h"]], S.hrs, async v=>{ S.hrs=v; save(); await refreshSeries(); renderChart(); });
 

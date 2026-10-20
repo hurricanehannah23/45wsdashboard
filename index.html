@@ -133,7 +133,12 @@ td.warn{color:var(--warn);font-weight:600} td.crit{color:var(--crit);font-weight
 .dirarrow{display:inline-block;width:12px;text-align:center;color:var(--muted)}
 .empty{color:var(--muted);padding:18px 12px;text-align:center;font-size:13px}
 
-#chart{width:100%;height:300px;display:block}
+#chart{width:100%;height:220px;display:block}
+#netChart{width:100%;height:320px;display:block}
+.tdtrend{border-top:1px solid var(--line);padding:10px 8px 4px}
+.tdtrend .tdh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px 6px}
+.tdtrend .ldl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:auto}
+.tdtrend .legend{padding:6px 6px 4px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .seg button{background:none;border:0;padding:4px 9px;cursor:pointer;color:var(--muted);font-size:12px}
 .seg button.on{background:var(--line);color:var(--fg)}
@@ -308,6 +313,21 @@ td{border-bottom-color:var(--line)}
 .rtile .eta{font:600 11px var(--f-mono);color:#1f0d02;background:var(--strong);padding:2px 6px;border-radius:3px}
 .rtile.eta-on{border-color:color-mix(in srgb,var(--strong) 55%,transparent)}
 @media (max-width:640px){ .measure{position:static;width:auto;margin:8px 10px 0;order:3} }
+/* wall mode: the lightning map alone, full screen */
+.wallbar{display:none}
+body.wall{padding:0!important}
+body.wall header, body.wall .strip, body.wall #notice, body.wall #claudeNote, body.wall #grid-light > .col, body.wall .layerdock, body.wall #warnList{display:none!important}
+body.wall #grid-light{display:block;margin:0}
+body.wall #lightPanel{border-radius:0}
+body.wall #lightPanel .mapcv, body.wall #map{height:100vh;height:100dvh;max-height:none;border-radius:0}
+body.wall .wallbar{display:flex;position:absolute;z-index:5;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:10px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px)}
+body.wall .ov-tr{top:62px}
+body.wall .ov-tl{top:max(10px,env(safe-area-inset-top,0px))}
+.wbclock{font:600 15px var(--f-mono);font-variant-numeric:tabular-nums} .wbclock b{color:var(--muted);font-size:11px;margin-right:6px}
+.wbstat{font-size:12px;font-weight:600;letter-spacing:.06em;padding:3px 8px;border-radius:4px}
+.wbstat.crit{background:var(--crit);color:#fff} .wbstat.warn{background:var(--warn);color:#1c1503} .wbstat.ok{color:var(--ok)}
+body.wall.drawer-open{padding-right:0!important}
+body.wall.drawer-open .wallbar{right:calc(min(400px,100vw) + 10px)}
 /* severe-alert toast */
 .toast{position:fixed;z-index:45;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 32px));display:grid;gap:4px;padding:12px 14px 12px 18px;border-radius:10px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 16px 40px #000a;overflow:hidden}
 .toast::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc,var(--crit))}
@@ -385,6 +405,12 @@ body.wall .stile .sv{font-size:24px}
         <div class="seg" id="segBase"></div>
       </div>
       <div class="ov ov-tc" id="radarBadge" hidden></div>
+      <div class="wallbar" id="wallBar">
+        <span class="wbclock"><b>Z</b><span id="wbZ">--:--:--</span></span>
+        <span class="wbstat" id="wbStat"></span>
+        <button type="button" class="ibtn" id="wbBell" aria-label="Show alerts"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 16h15.4L18 12.6V9a6 6 0 0 0-6-6Zm-2.2 15a2.2 2.2 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="badge" id="wbBadge" hidden>0</span></button>
+        <button type="button" class="btn sm" id="wbExit">Exit wall mode</button>
+      </div>
       <div class="measure" id="measure" hidden></div>
       <div class="ov ov-bl legend">
       <span><svg width="12" height="12"><path d="M1 6H11M6 1V11" stroke="#fff" stroke-width="2"/></svg>Cloud-to-ground (Merlin CG)</span>
@@ -439,7 +465,7 @@ body.wall .stile .sv{font-size:24px}
       <div class="ov ov-tr"><div class="seg" id="segBase2"></div><button type="button" class="btn sm" id="btnTFit">Fit towers</button></div>
       <div class="ov ov-bl legend">
         <span><span class="dot" style="background:var(--ok)"></span>Below threshold</span>
-        <span><span class="dot" style="background:var(--warn)"></span>Watch</span>
+        <span><span class="dot" style="background:var(--warn)"></span>Sustained Advisory</span>
         <span><span class="dot" style="background:var(--strong)"></span>Strong</span>
         <span><span class="dot" style="background:var(--crit)"></span>Damaging</span>
         <span><span class="dot" style="background:#9aa8af"></span>No wind sensor</span>
@@ -450,6 +476,11 @@ body.wall .stile .sv{font-size:24px}
   <section class="panel">
     <div class="ph"><h2 id="tdTitle">Tower detail</h2><span class="meta" id="tdMeta"></span></div>
     <div class="pb" id="tdBody"></div>
+    <div class="tdtrend">
+      <div class="tdh"><span class="ldl">Trend</span><select class="sm" id="selTower" aria-label="Tower and height"></select><div class="seg" id="segHrs"></div></div>
+      <canvas id="chart" aria-label="Wind speed trend for the selected tower"></canvas>
+      <div class="legend" id="chartLegend"></div>
+    </div>
   </section>
 </div>
 
@@ -472,12 +503,12 @@ body.wall .stile .sv{font-size:24px}
 
 <div class="grid wallhide">
   <section class="panel">
-    <div class="ph"><h2>Wind trend</h2>
-      <select class="sm" id="selTower" aria-label="Tower"></select>
-      <div class="seg" id="segHrs"></div>
+    <div class="ph"><h2>Wind trend · highest of all towers</h2><span class="meta" id="netMeta"></span>
+      <div class="seg" id="segNetLvl" aria-label="Sensor heights"></div>
+      <div class="seg" id="segNetHrs" aria-label="Time window"></div>
     </div>
-    <div class="pb" style="padding:8px 8px 4px"><canvas id="chart" aria-label="Wind speed chart"></canvas></div>
-    <div class="legend" id="chartLegend"></div>
+    <div class="pb" style="padding:8px 8px 4px"><canvas id="netChart" aria-label="Highest sustained and peak wind across all towers"></canvas></div>
+    <div class="legend" id="netLegend"></div>
     <div class="thr" id="thrBar"></div>
   </section>
 </div>
@@ -547,7 +578,7 @@ body.wall .stile .sv{font-size:24px}
         <div class="fr"><label for="s_sfcMax">Surface = sensors at or below (ft)</label><input type="number" id="s_sfcMax" min="0" max="500"></div>
         <div class="fr"><label>Alert on</label><div><label class="chk"><input type="checkbox" id="s_aSfc">Surface winds</label><label class="chk"><input type="checkbox" id="s_aAgl">Above-ground winds</label></div></div>
         <div class="fr"><label for="s_repeat">Re-alert after (min)</label><input type="number" id="s_repeat" min="1" max="240"></div>
-        <div class="hint">Wind levels are set under the trend chart. An alert fires when a tower moves up a level (Watch, Warning – Strong, Warning – Damaging), and again after the re-alert time if it stays there.</div>
+        <div class="hint">Wind levels are set under the trend chart. An alert fires when a tower moves up a level (Sustained Advisory, Warning – Strong, Warning – Damaging), and again after the re-alert time if it stays there.</div>
       </fieldset>
       <fieldset><legend>Alerts</legend>
         <div class="fr"><label>Signals</label><div><label class="chk"><input type="checkbox" id="s_sound">Sound</label><label class="chk"><input type="checkbox" id="s_notif">Desktop notification</label><label class="chk"><input type="checkbox" id="s_vib">Vibrate</label></div></div>
@@ -588,7 +619,7 @@ const DEFAULTS = {
   wthr: { pk:{watch:18, strong:35, damaging:50}, avg:{watch:null, strong:null, damaging:null} },
   sound: true, notif: true, vib: true,
   src: {c2g:true, c2c:true, winds:true, efm:true}, showCG: true, showCC: true, showRings: true, showNames: true, showTowers: true, showWarn: true, nwsNm: 100, staleL: 3, staleW: 5, op: "", logFilter: "all",
-  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, mapWin: 30, hrs: 3, tower: "", region: "rings", base: "sat"
+  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, tower: "", region: "rings", base: "sat"
 };
 const LS = "capeLW.v1", TEAMK = LS+".team";
 // Settings layers: built-in defaults < team defaults (settings.json beside the page) < this browser's own changes
@@ -720,7 +751,7 @@ function raise({key, kind, level, title, detail, group}){
   if(armed && S.vib && navigator.vibrate) try{ navigator.vibrate(kind==="lightning"||severe?[300,120,300,120,500]:[200,100,200]); }catch(e){}
   if(S.notif && "Notification" in window && Notification.permission==="granted"){ try{ new Notification(title,{body:detail,tag:key,renotify:true,requireInteraction:kind==="lightning"||severe}); }catch(e){} }
   flashTitle(title);
-  if(kind==="lightning" || kind==="stale" || severe){ if(window.innerWidth>=1500 || document.body.classList.contains("wall")) openDrawer(true); else if($("#drawer").hidden) showToast(a); }
+  if(kind==="lightning" || kind==="stale" || severe){ if(document.body.classList.contains("wall")){ if($("#drawer").hidden) showToast(a); } else if(window.innerWidth>=1500) openDrawer(true); else if($("#drawer").hidden) showToast(a); }
   renderAlerts();
 }
 let flashTimer=null; const baseTitle=document.title;
@@ -848,11 +879,11 @@ async function pollWindSeries(key, hrs){
   return rowsOf(await getJSON(q(apiBase("winds"), "/winds/range", parts))).map(normWind).filter(r=>Number.isFinite(r.t) && (h==null || Math.round(r.hgt)===+h)).sort((a,b)=>a.t-b.t);
 }
 let latestAll = [];
-function absorbWinds(list){ latestAll = list.map(r=>(r.key=keyOf(r),r)); for(const r of latestAll) pushHist(r); for(const r of list){ if(!hasWind(r)) continue; r.key = keyOf(r); const cur = towers[r.key]; if(!cur || (r.t||0) >= (cur.t||0)) towers[r.key] = r; }
+function absorbWinds(list){ latestAll = list.map(r=>(r.key=keyOf(r),r)); for(const r of latestAll){ pushHist(r); netAdd(r); } for(const r of list){ if(!hasWind(r)) continue; r.key = keyOf(r); const cur = towers[r.key]; if(!cur || (r.t||0) >= (cur.t||0)) towers[r.key] = r; }
   // borrow temperature from a sensor-only level of the same tower when the wind level has none
   for(const r of list){ if(hasWind(r) || r.tmp==null) continue; for(const w of Object.values(towers)) if(w.tower===r.tower && w.tmp==null) w.tmp=r.tmp; }
   checkWindAlerts(); }
-const WL = { ok:{name:"Below threshold", tag:"BELOW", col:"#3bc98a"}, watch:{name:"Watch", tag:"WATCH", col:"#f0c24a"},
+const WL = { ok:{name:"Below threshold", tag:"BELOW", col:"#3bc98a"}, watch:{name:"Sustained Advisory", tag:"ADVISORY", col:"#f0c24a"},
   strong:{name:"Warning – Strong", tag:"WARN · STRONG", col:"#ff8a3d"}, damaging:{name:"Warning – Damaging", tag:"WARN · DAMAGING", col:"#ff5161"} };
 const LEVELS = ["watch","strong","damaging"];
 const RANK = {ok:0,watch:1,strong:2,damaging:3};
@@ -911,20 +942,20 @@ function loopL(type){ (async()=>{ if(!S.src[type]) return;
 const lTimer={};
 function restartLightning(){ clearTimeout(lTimer.c2g); clearTimeout(lTimer.c2c); for(const k of ["c2g","c2c"]) if(S.src[k]) loopL(k); }
 let wTimer=0;
-function clearWinds(){ for(const k in towers) delete towers[k]; latestAll=[]; series=[]; renderWinds(); }
+function clearWinds(){ for(const k in towers) delete towers[k]; latestAll=[]; series=[]; net.clear(); netCovered=Infinity; renderWinds(); }
 let windSeeded=false;
 async function seedWindHist(){ if(S.demo || windSeeded) return; windSeeded=true;
-  if(SNAP.on){ try{ const f=await snapFeed("winds_hist","winds"); for(const e of rowsOf(f.rows)){ const r=normWind(e); r.key=keyOf(r); pushHist(r); } }catch(e){} return; }
+  if(SNAP.on){ try{ const f=await snapFeed("winds_hist","winds"); for(const e of rowsOf(f.rows)){ const r=normWind(e); r.key=keyOf(r); pushHist(r); netAdd(r); } }catch(e){} return; }
   try{ const now=new Date(), from=new Date(+now-16*60000);
     const rows=rowsOf(await getJSON(q(apiBase("winds"),"/winds/range",[`date>=${apiDate(from)}`,`date<=${apiDate(new Date(+now+60000))}`])));
-    for(const e of rows){ const r=normWind(e); r.key=keyOf(r); pushHist(r); } }catch(e){ /* history is a bonus; the rule still builds up from live polls */ } }
+    for(const e of rows){ const r=normWind(e); r.key=keyOf(r); pushHist(r); netAdd(r); } }catch(e){ /* history is a bonus; the rule still builds up from live polls */ } }
 function loopW(){ (async()=>{ if(!S.src.winds) return;
   await seedWindHist();
   try{ absorbWinds(S.demo? demo.latest() : await pollWindsLatest()); setFeed("winds",true); }
   catch(e){ setFeed("winds",false,e.message||String(e)); }
   if(!S.src.winds){ clearWinds(); return; }
   if(!S.tower || !towers[S.tower]){ const first = Object.values(towers).sort((a,b)=> a.tower===b.tower ? (b.hgt||0)-(a.hgt||0) : (a.tower>b.tower?1:-1))[0]; S.tower = first ? first.key : ""; }
-  await refreshSeries(); renderWinds();
+  await refreshSeries(); renderWinds(); if(SNAP.on || netCovered>Date.now()-S.netHrs*3600e3+60000) netBackfill();
   clearTimeout(wTimer); wTimer=setTimeout(loopW, S.pollW*1000); })(); }
 async function refreshSeries(){ if(!S.tower || !S.src.winds){ series=[]; return; }
   try{ series = S.demo ? demo.series(S.tower,S.hrs) : await pollWindSeries(S.tower,S.hrs); }catch(e){ setFeed("winds",false,"Trend: "+(e.message||e)); } }
@@ -1149,7 +1180,7 @@ function drawTowerLayer(c,w,h,mono){
     c.beginPath(); c.arc(x,y,isSel?8:6,0,Math.PI*2); c.fillStyle=col; c.fill(); c.lineWidth=isSel?3:1.5; c.strokeStyle=isSel?"#ffffff":"#0b1013"; c.stroke();
     if(showLbl || isSel || isHov){ c.font=(isSel?"600 ":"")+"11px "+mono; const tx = r? `${t.tower}  ${fmt(r.avg)}/${fmt(r.pk1)}` : t.tower; const tw=c.measureText(tx).width;
       c.fillStyle= isSel? "#e9a23bee" : "#000b"; c.fillRect(x+9,y-8,tw+8,16); c.fillStyle= isSel? "#1a1206" : "#e3ecf0"; c.fillText(tx,x+13,y+4); } }
-  $("#tmapMeta").textContent = !S.src.winds ? "Winds feed off" : `${ts.length} towers · ${ts.filter(t=>t.level!=="ok").length} at Watch or above`;
+  $("#tmapMeta").textContent = !S.src.winds ? "Winds feed off" : `${ts.length} towers · ${ts.filter(t=>t.level!=="ok").length} at Sustained Advisory or above`;
 }
 const TM = makeMap($("#tmap"), { draw: drawTowerLayer, fit: towerBox,
   hover:(x,y)=>{ const t=hitTower(x,y); const k=t?t.tower:null; if(k!==towerHover){ towerHover=k; renderView(TM); } return !!t; },
@@ -1215,7 +1246,7 @@ function renderWinds(){ const u=S.units; const all=Object.values(towers);
   $("#otherRow").hidden = !groups.OTHER.length;
   const sel=$("#selTower");
   sel.innerHTML = SITES.filter(([s])=>groups[s].length).map(([s,l])=>`<optgroup label="${l}">${groups[s].map(r=>r.key).sort().map(i=>`<option value="${esc(i)}" ${i===S.tower?"selected":""}>${esc(tLabel(i))}</option>`).join("")}</optgroup>`).join("") || "<option>—</option>";
-  renderChart(); renderMap(); renderTowerMap(); renderTowerDetail(); renderWallWinds(); }
+  renderChart(); renderNet(); renderMap(); renderTowerMap(); renderTowerDetail(); renderWallWinds(); }
 document.querySelectorAll(".windTable th").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(sortK===k) sortDir*=-1; else {sortK=k; sortDir=(k==="tower"?1:-1);} renderWinds(); });
 $("#selTower").onchange=async e=>{ S.tower=e.target.value; save(); renderWinds(); await refreshSeries(); renderChart(); };
 
@@ -1226,10 +1257,79 @@ function renderThrBar(){ const T=S.wthr, u=S.units, v=x=>x==null?"":x;
     <span>Avg 1-min ≥</span>${LEVELS.map(l=>`<input id="t_avg_${l}" type="number" min="0" step="1" value="${v(T.avg[l])}" placeholder="off" aria-label="Average ${WL[l].name}">`).join("")}
     <span>Times needed</span>${LEVELS.map(l=>`<input id="t_n_${l}" type="number" min="1" max="30" step="1" value="${S.wrule[l].n}" aria-label="Readings needed for ${WL[l].name}">`).join("")}
     <span>Within (min)</span>${LEVELS.map(l=>`<input id="t_m_${l}" type="number" min="1" max="60" step="1" value="${S.wrule[l].min}" aria-label="Minutes window for ${WL[l].name}">`).join("")}
-  </div><span class="hint">A level is reached when readings hit it the set number of times within the window (Watch: 3 times in 15 min). Leave a speed box empty to turn that check off. Table cells color each reading as it is; badges, the tower map and alerts use the rule.</span></div>`;
+  </div><span class="hint">A level is reached when readings hit it the set number of times within the window (Sustained Advisory: 3 times in 15 min). Leave a speed box empty to turn that check off. Table cells color each reading as it is; badges, the tower map and alerts use the rule.</span></div>`;
   for(const l of LEVELS){ $(`#t_n_${l}`).onchange=e=>{ const x=num(e.target.value); if(x==null) return; S.wrule[l]={...S.wrule[l], n:Math.max(1,Math.round(x))}; save(); for(const t in windLvl) delete windLvl[t]; checkWindAlerts(); renderWinds(); };
     $(`#t_m_${l}`).onchange=e=>{ const x=num(e.target.value); if(x==null) return; S.wrule[l]={...S.wrule[l], min:Math.max(1,Math.round(x))}; save(); for(const t in windLvl) delete windLvl[t]; checkWindAlerts(); renderWinds(); }; }
   for(const kind of ["pk","avg"]) for(const l of LEVELS) $(`#t_${kind}_${l}`).onchange=e=>{ const x=e.target.value.trim()===""? null : num(e.target.value); S.wthr[kind][l]=x; save(); for(const t in windLvl) delete windLvl[t]; checkWindAlerts(); renderWinds(); }; }
+
+/* ---------------- Network winds: highest sustained and peak across all towers ---------------- */
+const net = new Map();   // minute (ms) -> { "<height ft>": [maxAvg, maxPeak, towerAvg, towerPeak] }
+let netCovered = Infinity, netFilling = false;
+function netAdd(r){ if(!hasWind(r) || !Number.isFinite(r.t)) return; const m=Math.floor(r.t/60000)*60000; let p=net.get(m); if(!p){ p={}; net.set(m,p); }
+  const hk = r.hgt==null ? "?" : String(Math.round(r.hgt)), e = p[hk] || (p[hk]=[null,null,"",""]);
+  if(r.avg!=null && (e[0]==null || r.avg>e[0])){ e[0]=r.avg; e[2]=r.tower; }
+  if(r.pk1!=null && (e[1]==null || r.pk1>e[1])){ e[1]=r.pk1; e[3]=r.tower; } }
+function netPrune(){ const cut=Date.now()-13*3600e3; for(const t of net.keys()) if(t<cut) net.delete(t); }
+function netSeries(){ const t0=Date.now()-S.netHrs*3600e3, out=[];
+  for(const t of [...net.keys()].sort((a,b)=>a-b)){ if(t<t0) continue; const p=net.get(t); let a=null,pk=null,ta="",tp="";
+    for(const [hk,e] of Object.entries(p)){ const h=+hk, agl=Number.isFinite(h) && h>S.sfcMax;
+      if(S.netLvl==="sfc" && agl) continue; if(S.netLvl==="agl" && !agl) continue;
+      if(e[0]!=null && (a==null || e[0]>a)){ a=e[0]; ta=`${e[2]} · ${hk} ft`; }
+      if(e[1]!=null && (pk==null || e[1]>pk)){ pk=e[1]; tp=`${e[3]} · ${hk} ft`; } }
+    if(a!=null || pk!=null) out.push({t, a, p:pk, ta, tp}); }
+  // smoothing: trailing average over the last S.netSmooth minutes
+  const W=S.netSmooth*60000; let i0=0, sa=0, na=0, sp=0, np=0;
+  for(let i=0;i<out.length;i++){ const r=out[i]; if(r.a!=null){ sa+=r.a; na++; } if(r.p!=null){ sp+=r.p; np++; }
+    while(out[i0].t <= r.t-W){ const o=out[i0]; if(o.a!=null){ sa-=o.a; na--; } if(o.p!=null){ sp-=o.p; np--; } i0++; }
+    r.sa = na? sa/na : null; r.sp = np? sp/np : null; }
+  return out; }
+// Load older readings for the network chart (in 30-minute pieces so each request stays small)
+async function netBackfill(){ if(netFilling || !S.src.winds) return;
+  if(S.demo){ if(netCovered!==-1){ for(const k of new Set(Object.values(towers).map(r=>r.tower))) for(const r of demo.series(k, 12)) netAdd(r); netCovered=-1; renderNet(); } return; }
+  netFilling=true;
+  try{
+    if(SNAP.on){ const f=await snapFeed("winds_max","winds"); for(const row of rowsOf(f.rows)){ const t=Date.parse(row.t); if(!Number.isFinite(t)) continue; const p=net.get(t)||{}; for(const [hk,e] of Object.entries(row.h||{})){ const cur=p[hk]; if(!cur){ p[hk]=e.slice(); continue; } if(e[0]!=null && (cur[0]==null||e[0]>cur[0])){ cur[0]=e[0]; cur[2]=e[2]; } if(e[1]!=null && (cur[1]==null||e[1]>cur[1])){ cur[1]=e[1]; cur[3]=e[3]; } } net.set(t,p); } }
+    else { const want=Date.now()-S.netHrs*3600e3; let end = Math.min(netCovered, Date.now()+60000);
+      while(end>want){ const start=Math.max(want, end-30*60000);
+        const rows=rowsOf(await getJSON(q(apiBase("winds"),"/winds/range",[`date>=${apiDate(new Date(start))}`,`date<=${apiDate(new Date(end))}`])));
+        for(const e of rows) netAdd(normWind(e)); netCovered=start; end=start; renderNet(); } } }
+  catch(e){ $("#netMeta").textContent = "Couldn't load earlier readings: "+(e.message||e); }
+  finally{ netFilling=false; netPrune(); renderNet(); } }
+const netCv=$("#netChart"), nctx=netCv.getContext("2d"); let netHover=null;
+function renderNet(){ const cv=netCv, dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w) return;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const c=nctx; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  const mono=getComputedStyle(document.body).getPropertyValue("--f-mono"), T=S.wthr, pl=38, pr=12, pt=10, pb=24, iw=w-pl-pr, ih=h-pt-pb;
+  const now=Date.now(), t0=now-S.netHrs*3600e3, d=netSeries(), u=S.units;
+  const last=d[d.length-1], lvlName={all:"all heights",sfc:`surface (≤ ${S.sfcMax} ft)`,agl:`above ground (> ${S.sfcMax} ft)`}[S.netLvl];
+  $("#netLegend").innerHTML=`<span><span class="sw" style="background:#6cb6ff"></span>Highest sustained (1-min avg)</span><span><span class="sw" style="background:#e9a23b"></span>Highest peak (1-min)</span><span><span class="sw" style="background:#8a98a0;height:2px"></span>Faint lines: each minute · bold: ${S.netSmooth}-min average</span>${LEVELS.map(l=>`<span><span class="sw" style="background:${WL[l].col};height:2px"></span>${WL[l].name}</span>`).join("")}`;
+  $("#netMeta").textContent = !S.src.winds? "Winds feed is off" : last? `${lvlName} · now ${fmt(last.a)} sustained (${last.ta}), ${fmt(last.p)} peak (${last.tp}) ${u}${netFilling?" · loading earlier readings…":""}` : (netFilling? "Loading readings…" : "Waiting for readings");
+  const dmax=Math.max(0,...d.map(r=>r.p??r.a??0));
+  let ymax=Math.max(T.pk.strong??0, dmax, (T.pk.damaging!=null && dmax>T.pk.damaging*0.7)? T.pk.damaging : 0, 10)*1.12; const step=ymax>60?20:ymax>30?10:5; ymax=Math.ceil(ymax/step)*step;
+  const X=t=>pl+(t-t0)/(now-t0)*iw, Y=v=>pt+ih-v/ymax*ih;
+  c.font="11px "+mono; c.strokeStyle="#1f2a31"; c.fillStyle="#7a8a93"; c.lineWidth=1; c.textAlign="right";
+  for(let v=0; v<=ymax; v+=step){ const y=Y(v); c.beginPath(); c.moveTo(pl,y); c.lineTo(w-pr,y); c.stroke(); c.fillText(v,pl-6,y+4); }
+  c.textAlign="center"; const ts=S.netHrs<=1?10:S.netHrs<=3?30:S.netHrs<=6?60:120;
+  for(let t=Math.ceil(t0/(ts*60000))*ts*60000; t<=now; t+=ts*60000){ const x=X(t); c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke(); c.fillText(hhmmZ(t),x,h-6); }
+  c.textAlign="left"; c.font="10px "+mono;
+  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null||v>ymax) continue; c.strokeStyle=WL[l].col+(kind==="pk"?"cc":"77"); c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); c.fillStyle=WL[l].col; c.fillText(l==="watch"? (kind==="pk"? WL[l].name : "avg "+WL[l].name) : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`,pl+4,Y(v)-3); }
+  if(!d.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText(!S.src.winds?"Winds feed is off.":"Waiting for tower readings.",pl+iw/2,pt+ih/2); return; }
+  const path=(k)=>{ c.beginPath(); let on=false; for(const r of d){ if(r[k]==null){ on=false; continue; } const x=X(r.t), y=Y(r[k]); if(!on){ c.moveTo(x,y); on=true; } else c.lineTo(x,y); } };
+  // raw per-minute maxima (faint)
+  path("p"); c.strokeStyle="rgba(233,162,59,.35)"; c.lineWidth=1; c.stroke();
+  path("a"); c.strokeStyle="rgba(108,182,255,.35)"; c.lineWidth=1; c.stroke();
+  // smoothed trends (bold) with a soft fill under the sustained line
+  const sus=d.filter(r=>r.sa!=null); if(sus.length){ c.beginPath(); sus.forEach((r,i)=>{ const x=X(r.t),y=Y(r.sa); i?c.lineTo(x,y):c.moveTo(x,y); }); c.lineTo(X(sus[sus.length-1].t),Y(0)); c.lineTo(X(sus[0].t),Y(0)); c.closePath(); c.fillStyle="rgba(108,182,255,.10)"; c.fill(); }
+  path("sp"); c.strokeStyle="#e9a23b"; c.lineWidth=2.4; c.stroke();
+  path("sa"); c.strokeStyle="#6cb6ff"; c.lineWidth=2.4; c.stroke();
+  for(const [k,col] of [["sp","#e9a23b"],["sa","#6cb6ff"]]){ const L=[...d].reverse().find(r=>r[k]!=null); if(L){ c.fillStyle=col; c.beginPath(); c.arc(X(L.t),Y(L[k]),3.5,0,Math.PI*2); c.fill(); } }
+  if(netHover!=null){ let best=null; for(const r of d) if(!best || Math.abs(r.t-netHover)<Math.abs(best.t-netHover)) best=r;
+    if(best){ const x=X(best.t); c.strokeStyle="#cfdbe066"; c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke();
+      const lines=[`${hhmmZ(best.t)}`, `Sustained ${fmt(best.a,1)} ${u} · ${best.ta}  (avg ${fmt(best.sa,1)})`, `Peak ${fmt(best.p,1)} ${u} · ${best.tp}  (avg ${fmt(best.sp,1)})`];
+      c.font="11px "+mono; const tw=Math.max(...lines.map(l=>c.measureText(l).width))+14, bx=Math.min(Math.max(x+10,pl), w-pr-tw);
+      c.fillStyle="#0d1316ee"; c.fillRect(bx,pt+4,tw,52); c.fillStyle="#d8e2e7"; lines.forEach((l,i)=>c.fillText(l,bx+7,pt+19+i*15)); } } }
+netCv.addEventListener("pointermove",e=>{ const w=netCv.clientWidth, pl=38, pr=12, now=Date.now(), t0=now-S.netHrs*3600e3; netHover=t0+(e.offsetX-pl)/(w-pl-pr)*(now-t0); renderNet(); });
+netCv.addEventListener("pointerleave",()=>{ netHover=null; renderNet(); });
 
 const chart=$("#chart"), cctx=chart.getContext("2d");
 function renderChart(){ const dpr=window.devicePixelRatio||1, w=chart.clientWidth, h=chart.clientHeight; if(!w) return;
@@ -1249,7 +1349,7 @@ function renderChart(){ const dpr=window.devicePixelRatio||1, w=chart.clientWidt
   for(let t=Math.ceil(t0/(tstep*60000))*tstep*60000; t<=now; t+=tstep*60000){ const x=X(t); c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke(); c.fillText(hhmmZ(t),x,h-6); }
   const thr=(v,col)=>{ c.strokeStyle=col; c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); };
   c.textAlign="left"; c.font="10px "+mono;
-  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null || v>ymax) continue; thr(v, WL[l].col+(kind==="pk"?"cc":"77")); c.fillStyle=WL[l].col; c.fillText(`${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`, pl+4, Y(v)-3); }
+  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null || v>ymax) continue; thr(v, WL[l].col+(kind==="pk"?"cc":"77")); c.fillStyle=WL[l].col; c.fillText(l==="watch"? (kind==="pk"? WL[l].name : "avg "+WL[l].name) : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`, pl+4, Y(v)-3); }
   if(!d.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText(!S.src.winds?"Winds feed is off.":S.tower?"No readings for this tower in the selected window.":"Waiting for tower readings.",pl+iw/2,pt+ih/2); return; }
   const line=(k,col,fill)=>{ const p=d.filter(r=>r[k]!=null); if(!p.length) return; c.beginPath(); p.forEach((r,i)=>{ const x=X(r.t),y=Y(r[k]); i?c.lineTo(x,y):c.moveTo(x,y); });
     if(fill){ c.save(); c.lineTo(X(p[p.length-1].t),Y(0)); c.lineTo(X(p[0].t),Y(0)); c.closePath(); c.fillStyle=fill; c.fill(); c.restore(); c.beginPath(); p.forEach((r,i)=>{ const x=X(r.t),y=Y(r[k]); i?c.lineTo(x,y):c.moveTo(x,y); }); }
@@ -1306,6 +1406,8 @@ $("#radarOp").oninput=e=>{ S.radarOp=+e.target.value; save(); renderMap(); };
 seg($("#segRadar"), [[0,"KMLB"],[1,"Mosaic"]], S.radar==="mos"?1:0, v=>{ S.radar=v?"mos":"mlb"; save(); radarState.loadedAt=0; radarState.ok=0; radarState.failed=0; const wasLoop=loopSt.on; stopLoop(); if(wasLoop) startLoop(); renderLayerBar(); renderMap(); });
 setInterval(renderRadarStatus, 20000);
 seg($("#segWin"), [[15,"15m"],[30,"30m"],[60,"60m"]], S.mapWin, v=>{ S.mapWin=v; save(); renderMap(); });
+seg($("#segNetHrs"), [[1,"1h"],[3,"3h"],[6,"6h"],[12,"12h"]], S.netHrs, v=>{ S.netHrs=v; save(); renderNet(); netBackfill(); });
+seg($("#segNetLvl"), [[0,"All"],[1,"Surface"],[2,"Above ground"]], ["all","sfc","agl"].indexOf(S.netLvl), v=>{ S.netLvl=["all","sfc","agl"][v]; save(); renderNet(); });
 seg($("#segHrs"), [[1,"1h"],[3,"3h"],[6,"6h"],[12,"12h"],[24,"24h"]], S.hrs, async v=>{ S.hrs=v; save(); await refreshSeries(); renderChart(); });
 
 /* ---------------- Settings dialog ---------------- */
@@ -1457,10 +1559,17 @@ function renderWallWinds(){ if(!document.body.classList.contains("wall")) return
     return `<div class="site"><div class="sh">${label}<span class="pill ${worst}" style="min-width:0">${WL[worst].tag}</span></div>${rows.slice(0,4).map(r=>{ const L=effLevel(r.key); return `<div class="tw"><span>${esc(tLabel(r.key))}</span><span>${fmt(r.pk1)} ${esc(u)} pk</span><span class="${L==="ok"?"":"lvl "+L}">${L==="ok"?"":WL[L].tag}</span></div>`; }).join("") || '<div class="hint">No towers reporting.</div>'}</div>`; }).join("");
   $("#wwBody").innerHTML = S.src.winds ? html : '<div class="hint">Winds feed is off.</div>';
   $("#wwMeta").textContent = S.src.winds ? "highest 1-min peaks" : ""; }
-function setWall(on){ document.body.classList.toggle("wall", on); window.scrollTo(0,0); $("#btnWall").setAttribute("aria-pressed", String(on)); $("#btnWall").title = on? "Exit wall mode (Esc)" : "Wall mode: full-screen layout for an ops-floor display";
+function setWall(on){ if(on && !$("#drawer").hidden) openDrawer(false); document.body.classList.toggle("wall", on); window.scrollTo(0,0); $("#btnWall").setAttribute("aria-pressed", String(on)); $("#btnWall").title = on? "Exit wall mode (Esc)" : "Wall mode: full-screen layout for an ops-floor display";
   if(on){ try{ document.documentElement.requestFullscreen?.().catch(()=>{}); }catch(e){} } else if(document.fullscreenElement){ try{ document.exitFullscreen(); }catch(e){} }
   for(const M of MAPS) M.view=null; setTimeout(()=>{ renderAllMaps(); renderWallWinds(); }, 60); }
 $("#btnWall").onclick=()=>setWall(!document.body.classList.contains("wall"));
+$("#wbExit").onclick=()=>setWall(false);
+$("#wbBell").onclick=()=>openDrawer($("#drawer").hidden);
+function renderWallBar(){ if(!document.body.classList.contains("wall")) return; const d=new Date();
+  $("#wbZ").textContent=`${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  const t=$("#st-light"), st=$("#wbStat"); const cls=t.classList.contains("crit")?"crit":t.classList.contains("warn")?"warn":"ok";
+  st.className="wbstat "+cls; st.textContent = cls==="crit"? `LIGHTNING ${t.querySelector(".sv").textContent} RINGS` : cls==="warn"? (t.querySelector(".ss").textContent||"WATCH").slice(0,48) : "NO LIGHTNING IN RINGS";
+  const n=alerts.length, b=$("#wbBadge"); b.hidden=!n; b.textContent=n; b.classList.toggle("hot", alerts.some(SEVERE)); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("wall") && !$("#dlg").open) setWall(false); });
 if(location.hash==="#wall") setWall(true);
 
@@ -1607,8 +1716,8 @@ function renderStrip(){ const now=Date.now(), W=S.window*60000;
   else { const rows=Object.values(towers); const lv=rows.map(r=>[effLevel(r.key),r]); const worst=lv.reduce((m,[l])=>RANK[l]>RANK[m]?l:m,"ok");
     const flagged=lv.filter(([l])=>l!=="ok").sort((a,b)=>RANK[b[0]]-RANK[a[0]] || (b[1].pk1??0)-(a[1].pk1??0));
     const top=rows.slice().sort((a,b)=>(b.pk1??-1)-(a.pk1??-1))[0];
-    setTile("#st-wind", worst, rows.length? (worst==="ok"? "Below" : WL[worst].name.replace("Warning – ","")) : "--",
-      !rows.length? "Waiting for tower readings" : flagged.length? `${flagged.length} at Watch or above · ${tLabel(flagged[0][1].key)} ${fmt(flagged[0][1].pk1)} ${S.units}` : top? `Highest peak ${fmt(top.pk1)} ${S.units} at ${tLabel(top.key)}` : ""); }
+    setTile("#st-wind", worst, rows.length? (worst==="ok"? "Below" : worst==="watch"? "Advisory" : WL[worst].name.replace("Warning – ","")) : "--",
+      !rows.length? "Waiting for tower readings" : flagged.length? `${flagged.length} at Advisory or above · ${tLabel(flagged[0][1].key)} ${fmt(flagged[0][1].pk1)} ${S.units}` : top? `Highest peak ${fmt(top.pk1)} ${S.units} at ${tLabel(top.key)}` : ""); }
   // nws
   if(!S.showWarn) setTile("#st-nws","", "Off", "NWS warnings layer is off");
   else if(nws.err && !nws.at) setTile("#st-nws","warn","?", "Couldn't reach the National Weather Service");
@@ -1636,9 +1745,9 @@ function applyClaudeMode(){ if(!IN_CLAUDE) return;
   renderLayerBar(); renderAllMaps(); }
 
 /* ---------------- Boot ---------------- */
-function tick(){ try{ renderStrip(); }catch(e){} if(SNAP.on && Date.now()%10000<1000) renderSnapNote(); const d=new Date(); $("#clkZ").textContent=`${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`; $("#clkL").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; renderFeeds(); renderRings(); }
+function tick(){ try{ renderStrip(); renderWallBar(); }catch(e){} if(SNAP.on && Date.now()%10000<1000) renderSnapNote(); const d=new Date(); $("#clkZ").textContent=`${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`; $("#clkL").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; renderFeeds(); renderRings(); }
 setInterval(tick,1000); setInterval(()=>{ renderMap(); renderLog(); },15000);
-let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ for(const M of MAPS) M.view=null; renderAllMaps(); renderChart(); },150); });
+let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ for(const M of MAPS) M.view=null; renderAllMaps(); renderChart(); renderNet(); },150); });
 if("wakeLock" in navigator){ const wl=()=>navigator.wakeLock.request("screen").catch(()=>{}); wl(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") wl(); }); }
 updateArm(); renderThrBar(); renderTowerDetail(); renderLayerBar(); renderEvLog(); tick();
 if(IN_CLAUDE){ brInit().then(()=>{ applyClaudeMode(); restart(); pollNWS(); fetchTeam(); }); }

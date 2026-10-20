@@ -135,7 +135,10 @@ td.warn{color:var(--warn);font-weight:600} td.crit{color:var(--crit);font-weight
 
 #chart{width:100%;height:220px;display:block}
 #netChart{width:100%;height:320px;display:block}
-.ntg[aria-pressed="true"]{border-color:var(--accent);color:var(--fg);background:var(--raised)} .ntg[aria-pressed="false"]{color:var(--dim)}
+.ntg{display:inline-flex;align-items:center;gap:6px}
+.ntg[aria-pressed="true"]{border-color:var(--nc);color:var(--nc);background:color-mix(in srgb,var(--nc) 14%,transparent)}
+.ntg[aria-pressed="false"]{color:var(--dim);border-color:var(--line);background:transparent;opacity:.6}
+.ntg[aria-pressed="false"] svg{filter:grayscale(1)}
 .tdtrend{border-top:1px solid var(--line);padding:10px 8px 4px}
 .tdtrend .tdh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 6px 6px}
 .tdtrend .ldl{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:auto}
@@ -206,7 +209,13 @@ body:not(.wall) #netCard.sized > .pb{flex:1 1 auto;min-height:0} body:not(.wall)
 @media (max-width:900px){ .dash > section{grid-column:1/-1!important} }
 .ccover{display:none}
 body.layout-edit:not(.wall) .ccover{display:block;position:absolute;inset:0;z-index:30;border:2px dashed var(--accent);border-radius:inherit;background:#0b111480;cursor:grab;touch-action:none}
-body.layout-edit .dash > section.dragging{opacity:.45}
+body.layout-edit .dash > section.dragging{opacity:.35}
+body.layout-edit .dash > section.dragging .ccover{border-style:solid;background:#0b1114b0}
+body.cdrag, body.cdrag *{cursor:grabbing!important;user-select:none!important}
+.dghost{position:fixed;left:0;top:0;z-index:60;pointer-events:none;padding:9px 14px;border-radius:10px;background:var(--accent);color:#1a1206;font-weight:600;font-size:13px;box-shadow:0 10px 30px #000a;white-space:nowrap}
+.dropline{position:fixed;z-index:59;pointer-events:none;border-radius:4px;background:var(--accent);box-shadow:0 0 0 3px #e9a23b44,0 0 16px var(--accent)}
+@keyframes justmoved{from{box-shadow:0 0 0 3px var(--accent)}to{box-shadow:0 0 0 3px transparent}}
+.dash > section.justmoved{animation:justmoved 1.2s ease-out}
 body.layout-edit .dash > section.droptarget .ccover{background:#3d8bd440}
 .ccbar{position:absolute;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px;border-radius:8px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 6px 18px #0007;font-size:13px}
 .ccbar .cn{font-weight:600;color:var(--fg);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -214,6 +223,9 @@ body.layout-edit .dash > section.droptarget .ccover{background:#3d8bd440}
 .ccbar .grip{color:var(--dim);font-size:16px;line-height:1}
 .rsz{position:absolute;right:0;bottom:0;width:30px;height:30px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 0 50%,var(--accent) 50% 58%,transparent 58% 68%,var(--accent) 68% 76%,transparent 76%);border-bottom-right-radius:inherit}
 .layoutbar{display:none}
+.layouttop{display:none}
+body.layout-edit:not(.wall) .layouttop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:14px;padding:10px 12px;border-radius:10px;border:1px dashed var(--accent);background:var(--raised);font-size:13px;color:var(--dim)}
+.layouttop > span{flex:1 1 260px} .layouttop b{color:var(--fg)}
 body.layout-edit:not(.wall) .layoutbar{display:flex;position:fixed;z-index:45;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(860px,calc(100vw - 32px));flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 14px 40px #000a}
 .layoutbar .lbt{flex:1 1 260px;font-size:13px;color:var(--dim)} .layoutbar .lbt b{color:var(--fg)}
 .layoutbar .hid{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%} .layoutbar .hid:empty{display:none}
@@ -429,6 +441,11 @@ body.wall .stile .sv{font-size:24px}
   <div class="dbody"><div id="alerts" aria-live="assertive"></div><div class="dempty" id="noAlerts">No active alerts.</div></div>
 </aside>
 
+<div class="layouttop" id="layoutTop" role="region" aria-label="Layout editing">
+  <span><b>Layout mode</b> · drag cards to move them, drag a corner to resize</span>
+  <button type="button" class="btn sm primary" id="lyReset2">↺ Back to default layout</button>
+  <button type="button" class="btn sm" id="lyDone2">Done</button>
+</div>
 <div class="dash" id="dash">
   <section class="panel mappanel" id="lightPanel">
     <div class="mapbox">
@@ -530,10 +547,10 @@ body.wall .stile .sv{font-size:24px}
 
   <section class="panel" id="netCard">
     <div class="ph"><h2>Wind trend · highest of all towers</h2><span class="meta" id="netMeta"></span>
-      <button type="button" class="btn sm ntg" id="nt-ksc" aria-pressed="true">Kennedy</button>
-      <button type="button" class="btn sm ntg" id="nt-ccsfs" aria-pressed="true">Cape</button>
-      <button type="button" class="btn sm ntg" id="nt-sus" aria-pressed="true">Sustained</button>
-      <button type="button" class="btn sm ntg" id="nt-pk" aria-pressed="true">Peak</button>
+      <button type="button" class="btn sm ntg" id="nt-ksc" aria-pressed="true" style="--nc:#6cb6ff"><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#6cb6ff" stroke-width="2.6" stroke-linecap="round"/></svg>Kennedy</button>
+      <button type="button" class="btn sm ntg" id="nt-ccsfs" aria-pressed="true" style="--nc:#e9a23b"><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#e9a23b" stroke-width="2.6" stroke-linecap="round"/></svg>Cape</button>
+      <button type="button" class="btn sm ntg" id="nt-sus" aria-pressed="true" style="--nc:#cfdbe0"><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>Sustained</button>
+      <button type="button" class="btn sm ntg" id="nt-pk" aria-pressed="true" style="--nc:#cfdbe0"><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="6,4"/></svg>Peak</button>
       <div class="seg" id="segNetLvl" aria-label="Sensor heights"></div>
       <div class="seg" id="segNetHrs" aria-label="Time window"></div>
     </div>
@@ -564,8 +581,8 @@ body.wall .stile .sv{font-size:24px}
 </div>
 
 <div class="layoutbar" id="layoutBar" role="region" aria-label="Layout editing">
-  <span class="lbt"><b>Customizing layout.</b> Drag a card to move it. Drag its corner to change width and height. Saved in this browser only.</span>
-  <button type="button" class="btn sm" id="lyReset">Reset layout</button>
+  <span class="lbt"><b>Customizing layout.</b> Drag a card and drop it where the orange line shows (◀ ▶ nudge it one place, Esc cancels). Drag its corner to resize. Saved in this browser only.</span>
+  <button type="button" class="btn sm primary" id="lyReset">↺ Back to default layout</button>
   <button type="button" class="btn sm" id="lyDone">Done</button>
   <div class="hid" id="lyHidden"></div>
 </div>
@@ -1866,26 +1883,15 @@ if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#
 for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
   const cv=document.createElement("div"); cv.className="ccover"; cv.dataset.card=id;
   cv.innerHTML=`<div class="ccbar"><span class="grip" aria-hidden="true">⠿</span><span class="cn">${CARDS[id]}</span><span class="cs"></span>
-    <button type="button" class="btn sm" data-act="auto">Auto height</button><button type="button" class="btn sm" data-act="full">Full width</button><button type="button" class="btn sm" data-act="hide">Hide</button></div>
+    <button type="button" class="btn sm" data-act="prev" title="Move one place earlier" aria-label="Move earlier">◀</button><button type="button" class="btn sm" data-act="next" title="Move one place later" aria-label="Move later">▶</button><button type="button" class="btn sm" data-act="auto">Auto height</button><button type="button" class="btn sm" data-act="full">Full width</button><button type="button" class="btn sm" data-act="hide">Hide</button></div>
     <div class="rsz" title="Drag to resize" aria-hidden="true"></div>`;
   el.appendChild(cv);
   cv.querySelectorAll("[data-act]").forEach(b=>{ b.onpointerdown=e=>e.stopPropagation(); b.onclick=()=>{ const a=b.dataset.act;
+    if(a==="prev"||a==="next"){ moveBy(el, a==="prev"? -1 : 1); return; }
     if(a==="auto") delete LAY.h[id]; if(a==="full") LAY.span[id]=12; if(a==="hide" && !LAY.hide.includes(id)) LAY.hide.push(id);
     layoutSave(); applyCard(id); renderHiddenList(); relayoutSoon(); }; });
-  // move: drag the card anywhere
-  cv.addEventListener("pointerdown",e=>{ if(e.target.closest(".rsz,button")||e.button) return; e.preventDefault();
-    const x0=e.clientX, y0=e.clientY; let moving=false, tgt=null;
-    const mv=ev=>{ if(!moving && Math.hypot(ev.clientX-x0, ev.clientY-y0)<5) return; moving=true; el.classList.add("dragging");
-      if(ev.clientY<70) window.scrollBy(0,-18); else if(ev.clientY>innerHeight-70) window.scrollBy(0,18);
-      const over=document.elementsFromPoint(ev.clientX,ev.clientY).map(n=>n.closest&&n.closest("#dash > section")).find(n=>n && n!==el && CARDS[n.id]);
-      if(tgt && tgt!==over) tgt.classList.remove("droptarget"); tgt=over||null; if(!tgt) return; tgt.classList.add("droptarget");
-      const r=tgt.getBoundingClientRect(), wide=r.width > dashEl.clientWidth*0.85;
-      const before = wide? ev.clientY < r.top+r.height/2 : ev.clientX < r.left+r.width/2;
-      if(before){ if(tgt.previousElementSibling!==el) dashEl.insertBefore(el,tgt); } else if(tgt.nextElementSibling!==el) dashEl.insertBefore(el,tgt.nextElementSibling); };
-    const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
-      el.classList.remove("dragging"); tgt?.classList.remove("droptarget");
-      if(moving){ LAY.order=[...dashEl.children].map(n=>n.id).filter(id=>CARDS[id]); layoutSave(); relayoutSoon(); } };
-    addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
+  // move: drag the card anywhere; it stays put while a label follows the pointer and a line shows where it will land
+  cv.addEventListener("pointerdown",e=>{ if(e.target.closest(".rsz,button")||e.button) return; e.preventDefault(); startCardDrag(el,e); });
   // resize: drag the corner
   const hz=cv.querySelector(".rsz");
   hz.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation();
@@ -1895,10 +1901,45 @@ for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
       LAY.h[id]=Math.max(minH(id), Math.round((ev.clientY-r.top)/10)*10); applyCard(id); };
     const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); layoutSave(); relayoutSoon(); };
     addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); }); }
+const visCards=()=>[...dashEl.children].filter(n=>CARDS[n.id] && n.offsetParent!==null);
+function saveOrder(el){ LAY.order=[...dashEl.children].map(n=>n.id).filter(id=>CARDS[id]); layoutSave(); relayoutSoon();
+  if(el){ el.classList.remove("justmoved"); void el.offsetWidth; el.classList.add("justmoved"); } }
+function moveBy(el,dir){ const v=visCards(), i=v.indexOf(el), o=v[i+dir]; if(!o) return;
+  dashEl.insertBefore(el, dir<0? o : o.nextElementSibling); saveOrder(el); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function startCardDrag(el,e){ const x0=e.clientX, y0=e.clientY; let px=x0, py=y0, active=false, drop=null, raf=0;
+  const ghost=document.createElement("div"), line=document.createElement("div");
+  ghost.className="dghost"; ghost.textContent="Move · "+CARDS[el.id]; line.className="dropline";
+  const gap=()=>parseFloat(getComputedStyle(dashEl).columnGap)||16;
+  function findDrop(){ let best=null, bd=Infinity;
+    for(const c of visCards()){ if(c===el) continue; const r=c.getBoundingClientRect();
+      const dx=Math.max(r.left-px,0,px-r.right), dy=Math.max(r.top-py,0,py-r.bottom), d=Math.hypot(dx,dy); if(d<bd){ bd=d; best={c,r}; } }
+    if(!best || bd>220) return null;
+    const {c,r}=best, wide=r.width > dashEl.clientWidth*0.85;
+    const before = wide? py < r.top+r.height/2 : px < r.left+r.width/2;
+    return {c, before, wide, r}; }
+  function paint(){ ghost.style.transform=`translate(${px+14}px,${py+14}px)`;
+    drop=findDrop(); if(!drop){ line.style.display="none"; return; }
+    const {r,before,wide}=drop, g=gap(); line.style.display="block";
+    if(wide){ Object.assign(line.style,{left:r.left+"px", width:r.width+"px", height:"5px", top:((before? r.top : r.bottom) + (before?-1:1)*g/2 - 2.5)+"px"}); }
+    else { Object.assign(line.style,{top:r.top+"px", height:r.height+"px", width:"5px", left:((before? r.left : r.right) + (before?-1:1)*g/2 - 2.5)+"px"}); } }
+  function tick(){ if(!active) return; const edge=90; let v=0;
+    if(py<edge) v=-Math.ceil((edge-py)/6); else if(py>innerHeight-edge) v=Math.ceil((py-(innerHeight-edge))/6);
+    if(v){ window.scrollBy(0,v); paint(); } raf=requestAnimationFrame(tick); }
+  const mv=ev=>{ px=ev.clientX; py=ev.clientY;
+    if(!active){ if(Math.hypot(px-x0,py-y0)<6) return; active=true; el.classList.add("dragging"); document.body.classList.add("cdrag");
+      document.body.append(ghost,line); raf=requestAnimationFrame(tick); }
+    paint(); };
+  const end=commit=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",cancel); removeEventListener("keydown",key,true);
+    cancelAnimationFrame(raf); ghost.remove(); line.remove(); el.classList.remove("dragging"); document.body.classList.remove("cdrag");
+    if(active && commit && drop){ dashEl.insertBefore(el, drop.before? drop.c : drop.c.nextElementSibling); saveOrder(el); }
+    active=false; };
+  const up=()=>end(true), cancel=()=>end(false), key=ev=>{ if(ev.key==="Escape"){ ev.stopPropagation(); end(false); } };
+  addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",cancel); addEventListener("keydown",key,true); }
 function setLayoutEdit(on){ document.body.classList.toggle("layout-edit",on); $("#btnLayout").setAttribute("aria-pressed",String(on)); }
 $("#btnLayout").onclick=()=>setLayoutEdit(!document.body.classList.contains("layout-edit"));
 $("#lyDone").onclick=()=>setLayoutEdit(false);
-$("#lyReset").onclick=()=>{ LAY=structuredClone(LAYOUT_DEF); layoutSave(); applyLayout(); };
+function layoutDefault(){ LAY=structuredClone(LAYOUT_DEF); layoutSave(); for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(el){ el.style.removeProperty("--ch"); } } applyLayout(); window.scrollTo({top:0,behavior:"smooth"}); }
+$("#lyReset").onclick=layoutDefault; $("#lyReset2").onclick=layoutDefault; $("#lyDone2").onclick=()=>setLayoutEdit(false);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("layout-edit")) setLayoutEdit(false); });
 applyLayout();
 </script>

@@ -89,6 +89,27 @@ def winds_hist(now):
     return {"rows": rows, "window_start": start.isoformat()}
 
 
+def winds_max(now, hist_rows, prev):
+    """Highest 1-min sustained and peak per minute and per sensor height, kept for 12 hours."""
+    points = {r["t"]: r["h"] for r in prev.get("rows", []) if "t" in r}
+    fresh = {}
+    for r in hist_rows:
+        t = (r.get("reading_datetime") or "")[:16]
+        if not t:
+            continue
+        h = str(round(r["hgt"])) if r.get("hgt") is not None else "?"
+        e = fresh.setdefault(t + ":00Z", {}).setdefault(h, [None, None, "", ""])
+        a, p = r.get("avg_spd_1min"), r.get("peak_spd_1min")
+        if a is not None and a < 999 and (e[0] is None or a > e[0]):
+            e[0], e[2] = a, r.get("tower")
+        if p is not None and p < 999 and (e[1] is None or p > e[1]):
+            e[1], e[3] = p, r.get("tower")
+    points.update(fresh)
+    cut = (now - timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:00Z")
+    rows = [{"t": t, "h": h} for t, h in sorted(points.items()) if t >= cut]
+    return {"rows": rows}
+
+
 def efm(now):
     rows = as_list(get(API["efm"], "/lplws_1min/latest"))
     if not rows:
@@ -124,6 +145,12 @@ def main(out):
             result["feeds"][name] = {**prev, "rows": prev.get("rows", []), "status": "error",
                                      "error": str(e)[:300], "failed_at": now.isoformat()}
             print(f"{name}: {e}", file=sys.stderr)
+    try:
+        hist = result["feeds"]["winds_hist"]["rows"] if result["feeds"]["winds_hist"]["status"] == "ok" else []
+        result["feeds"]["winds_max"] = {**winds_max(now, hist, old.get("winds_max", {})), "status": "ok" if hist else "error",
+                                        "fetched_at": now.isoformat(), "error": None if hist else "No recent tower readings"}
+    except Exception as e:
+        result["feeds"]["winds_max"] = {**old.get("winds_max", {"rows": []}), "status": "error", "error": str(e)[:300]}
     os.makedirs(os.path.join(out, "data"), exist_ok=True)
     path = os.path.join(out, "data", "latest.json")
     with open(path + ".tmp", "w") as f:

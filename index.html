@@ -189,12 +189,35 @@ body:not(.wall) #wallWinds{display:none}
 body.wall .wallhide{display:none!important}
 body.wall{font-size:16px}
 body.wall .brand h1{font-size:26px}
-body.wall #grid-light{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
 body.wall #map{max-height:none;aspect-ratio:auto;height:max(420px,calc(100vh - 300px))}
 body.wall .ring .nm{font-size:18px} body.wall .ring .sm{font-size:13px}
 body.wall .ring .pill{font-size:14px;min-width:120px;padding:5px 8px}
 body.wall .alert .t{font-size:17px}
-@media (max-width:900px){ body.wall #grid-light{grid-template-columns:minmax(0,1fr)} }
+
+/* ===== Customizable card layout ===== */
+.dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:16px;align-items:stretch}
+.dash > section{grid-column:span 12;position:relative}
+.dash > section[hidden], .dash > section.uhide{display:none!important}
+body:not(.wall) .dash > section.sized{height:var(--ch);overflow:hidden}
+body:not(.wall) .dash > section.sized > .tablewrap, body:not(.wall) .dash > section.sized > .rings, body:not(.wall) .dash > section.sized > #tdBody, body:not(.wall) .dash > section.sized > .ww{flex:1 1 auto;min-height:0;overflow:auto;max-height:none!important}
+body:not(.wall) .dash > section.sized.mappanel .mapbox{flex:1 1 auto;min-height:0}
+body:not(.wall) .dash > section.sized.mappanel .mapcv{height:100%!important;min-height:200px}
+body:not(.wall) #netCard.sized > .pb{flex:1 1 auto;min-height:0} body:not(.wall) #netCard.sized #netChart{height:100%;min-height:140px}
+@media (max-width:900px){ .dash > section{grid-column:1/-1!important} }
+.ccover{display:none}
+body.layout-edit:not(.wall) .ccover{display:block;position:absolute;inset:0;z-index:30;border:2px dashed var(--accent);border-radius:inherit;background:#0b111480;cursor:grab;touch-action:none}
+body.layout-edit .dash > section.dragging{opacity:.45}
+body.layout-edit .dash > section.droptarget .ccover{background:#3d8bd440}
+.ccbar{position:absolute;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px;border-radius:8px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 6px 18px #0007;font-size:13px}
+.ccbar .cn{font-weight:600;color:var(--fg);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ccbar .cs{font-family:var(--f-mono);font-size:12px;color:var(--dim)}
+.ccbar .grip{color:var(--dim);font-size:16px;line-height:1}
+.rsz{position:absolute;right:0;bottom:0;width:30px;height:30px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 0 50%,var(--accent) 50% 58%,transparent 58% 68%,var(--accent) 68% 76%,transparent 76%);border-bottom-right-radius:inherit}
+.layoutbar{display:none}
+body.layout-edit:not(.wall) .layoutbar{display:flex;position:fixed;z-index:45;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(860px,calc(100vw - 32px));flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 14px 40px #000a}
+.layoutbar .lbt{flex:1 1 260px;font-size:13px;color:var(--dim)} .layoutbar .lbt b{color:var(--fg)}
+.layoutbar .hid{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%} .layoutbar .hid:empty{display:none}
+body.layout-edit:not(.wall){padding-bottom:140px}
 
 /* ===== Redesign layer ===== */
 .brandwrap{display:flex;align-items:center;gap:10px;margin-right:8px;min-width:0}
@@ -317,8 +340,10 @@ td{border-bottom-color:var(--line)}
 /* wall mode: the lightning map alone, full screen */
 .wallbar{display:none}
 body.wall{padding:0!important}
-body.wall header, body.wall .strip, body.wall #notice, body.wall #claudeNote, body.wall #grid-light > .col, body.wall .layerdock, body.wall #warnList{display:none!important}
-body.wall #grid-light{display:block;margin:0}
+body.wall header, body.wall .strip, body.wall #notice, body.wall #claudeNote, body.wall .layerdock, body.wall #warnList{display:none!important}
+body.wall #dash{display:block;margin:0}
+body.wall #dash > section:not(#lightPanel){display:none!important}
+body.wall #lightPanel{display:flex!important;height:auto!important}
 body.wall #lightPanel{border-radius:0}
 body.wall #lightPanel .mapcv, body.wall #map{height:100vh;height:100dvh;max-height:none;border-radius:0}
 body.wall .wallbar{display:flex;position:absolute;z-index:5;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));align-items:center;gap:8px;padding:5px 6px 5px 12px;border-radius:10px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px)}
@@ -379,14 +404,15 @@ body.wall .stile .sv{font-size:24px}
     <div class="clock"><span><b>Z</b><span id="clkZ">--:--:--</span></span><span><b>LCL</b><span id="clkL">--:--:--</span></span></div>
     <button class="btn primary" id="btnArm">Enable alerts</button>
     <button type="button" class="ibtn" id="btnBell" aria-label="Show alerts" aria-expanded="false" title="Alerts"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 16h15.4L18 12.6V9a6 6 0 0 0-6-6Zm-2.2 15a2.2 2.2 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="badge" id="bellBadge" hidden>0</span></button>
+    <button type="button" class="ibtn" id="btnLayout" aria-label="Customize layout" aria-pressed="false" title="Customize layout: move and resize cards (saved in this browser)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
     <button type="button" class="ibtn" id="btnWall" aria-label="Wall mode" aria-pressed="false" title="Wall mode: full-screen layout for an ops-floor display"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <button type="button" class="ibtn" id="btnSettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10.3 3h3.4l.5 2.4 1.7.9 2.3-.9 1.7 2.9-1.8 1.6v2.2l1.8 1.6-1.7 2.9-2.3-.9-1.7.9-.5 2.4h-3.4l-.5-2.4-1.7-.9-2.3.9-1.7-2.9 1.8-1.6v-2.2L3.9 8.3l1.7-2.9 2.3.9 1.7-.9Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
   </div>
 </header>
 
 <div class="strip" id="strip" aria-label="Situation summary">
-  <button type="button" class="stile" id="st-light" data-go="grid-light"><span class="sl">Lightning</span><span class="sv">--</span><span class="ss"></span></button>
-  <button type="button" class="stile" id="st-wind" data-go="grid-winds"><span class="sl">Winds</span><span class="sv">--</span><span class="ss"></span></button>
+  <button type="button" class="stile" id="st-light" data-go="lightPanel"><span class="sl">Lightning</span><span class="sv">--</span><span class="ss"></span></button>
+  <button type="button" class="stile" id="st-wind" data-go="wp-KSC"><span class="sl">Winds</span><span class="sv">--</span><span class="ss"></span></button>
   <button type="button" class="stile" id="st-nws" data-go="warnList"><span class="sl">NWS warnings</span><span class="sv">--</span><span class="ss"></span></button>
   <button type="button" class="stile" id="st-feeds" data-go="none"><span class="sl">Data feeds</span><span class="sv">--</span><span class="ss"></span></button>
 </div>
@@ -403,7 +429,7 @@ body.wall .stile .sv{font-size:24px}
   <div class="dbody"><div id="alerts" aria-live="assertive"></div><div class="dempty" id="noAlerts">No active alerts.</div></div>
 </aside>
 
-<div class="grid g-top" id="grid-light">
+<div class="dash" id="dash">
   <section class="panel mappanel" id="lightPanel">
     <div class="mapbox">
       <canvas id="map" class="mapcv" aria-label="Map of lightning rings, strikes and wind towers"></canvas>
@@ -455,8 +481,7 @@ body.wall .stile .sv{font-size:24px}
     </div>
     <div class="warnlist" id="warnList"></div>
   </section>
-  <div class="col">
-  <section class="panel">
+  <section class="panel" id="ringsCard">
     <div class="ph"><h2>Ring status</h2><span class="meta" id="ringMeta">--</span></div>
     <div class="rings" id="rings"></div>
   </section>
@@ -464,11 +489,8 @@ body.wall .stile .sv{font-size:24px}
     <div class="ph"><h2>Winds</h2><span class="meta" id="wwMeta"></span></div>
     <div class="ww" id="wwBody"></div>
   </section>
-  </div>
-</div>
 
-<div class="grid g-top wallhide">
-  <section class="panel mappanel">
+  <section class="panel mappanel" id="tmapCard">
     <div class="mapbox">
       <canvas id="tmap" class="mapcv" aria-label="Map of wind towers; click a tower for its readings"></canvas>
       <div class="ov ov-tl"><span class="ovt">Wind towers</span><span class="meta" id="tmapMeta">--</span></div>
@@ -483,7 +505,7 @@ body.wall .stile .sv{font-size:24px}
       </div>
     </div>
   </section>
-  <section class="panel">
+  <section class="panel" id="tdCard">
     <div class="ph"><h2 id="tdTitle">Tower detail</h2><span class="meta" id="tdMeta"></span></div>
     <div class="pb" id="tdBody"></div>
     <div class="tdtrend">
@@ -492,9 +514,7 @@ body.wall .stile .sv{font-size:24px}
       <div class="legend" id="chartLegend"></div>
     </div>
   </section>
-</div>
 
-<div class="grid g-wind wallhide" id="grid-winds">
   <section class="panel" id="wp-KSC">
     <div class="ph"><h2>Kennedy towers</h2><span class="lvl" id="wl-KSC" hidden></span><span class="meta" id="wm-KSC">--</span></div>
     <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="KSC"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
@@ -503,16 +523,12 @@ body.wall .stile .sv{font-size:24px}
     <div class="ph"><h2>Cape towers</h2><span class="lvl" id="wl-CCSFS" hidden></span><span class="meta" id="wm-CCSFS">--</span></div>
     <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="CCSFS"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
   </section>
-</div>
-<div class="grid wallhide" id="otherRow" hidden>
-  <section class="panel" id="wp-OTHER">
+  <section class="panel" id="wp-OTHER" hidden>
     <div class="ph"><h2>Other towers</h2><span class="lvl" id="wl-OTHER" hidden></span><span class="meta" id="wm-OTHER">--</span></div>
     <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="OTHER"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
   </section>
-</div>
 
-<div class="grid wallhide">
-  <section class="panel">
+  <section class="panel" id="netCard">
     <div class="ph"><h2>Wind trend · highest of all towers</h2><span class="meta" id="netMeta"></span>
       <button type="button" class="btn sm ntg" id="nt-ksc" aria-pressed="true">Kennedy</button>
       <button type="button" class="btn sm ntg" id="nt-ccsfs" aria-pressed="true">Cape</button>
@@ -525,18 +541,14 @@ body.wall .stile .sv{font-size:24px}
     <div class="legend" id="netLegend"></div>
     <div class="thr" id="thrBar"></div>
   </section>
-</div>
 
-<div class="grid wallhide">
-  <section class="panel">
+  <section class="panel" id="logCard">
     <div class="ph"><h2>Strike log · in or near rings</h2><span class="meta" id="logMeta">--</span></div>
     <div class="tablewrap" style="max-height:340px"><table id="logTable"><thead><tr>
       <th>Time (Z)</th><th>Age</th><th>Type</th><th>Ring(s)</th><th>Lat</th><th>Lon</th><th>Signal</th>
     </tr></thead><tbody></tbody></table></div>
   </section>
-</div>
 
-<div class="grid wallhide">
   <section class="panel" id="evPanel">
     <div class="ph"><h2>Event log</h2><span class="meta" id="evMeta">--</span>
       <label class="opl" for="opInit">Operator <input type="text" id="opInit" maxlength="8" placeholder="initials" autocomplete="off"></label>
@@ -548,6 +560,14 @@ body.wall .stile .sv{font-size:24px}
       <th>Time (Z)</th><th>Type</th><th>Event</th><th>Location</th><th>Detail</th><th>By</th>
     </tr></thead><tbody></tbody></table></div>
   </section>
+
+</div>
+
+<div class="layoutbar" id="layoutBar" role="region" aria-label="Layout editing">
+  <span class="lbt"><b>Customizing layout.</b> Drag a card to move it. Drag its corner to change width and height. Saved in this browser only.</span>
+  <button type="button" class="btn sm" id="lyReset">Reset layout</button>
+  <button type="button" class="btn sm" id="lyDone">Done</button>
+  <div class="hid" id="lyHidden"></div>
 </div>
 
 <dialog id="dlg">
@@ -1287,7 +1307,7 @@ function renderWinds(){ const u=S.units; const all=Object.values(towers);
     const nT=new Set(rows.map(r=>r.tower)).size; $("#wm-"+site).textContent = `${nT} tower${nT===1?"":"s"}${maxPk.t? ` · max pk ${fmt(maxPk.v,1)} ${u} @ ${maxPk.t}`:""}${newest? " · "+hhmmZ(newest):""}`;
     const worst = rows.map(r=>effLevel(r.key)).reduce((m,l)=>RANK[l]>RANK[m]?l:m,"ok"); const lv=$("#wl-"+site);
     lv.hidden = worst==="ok"; lv.className="lvl "+worst; lv.textContent = WL[worst].tag; }
-  $("#otherRow").hidden = !groups.OTHER.length;
+  $("#wp-OTHER").hidden = !groups.OTHER.length;
   const sel=$("#selTower");
   sel.innerHTML = SITES.filter(([s])=>groups[s].length).map(([s,l])=>`<optgroup label="${l}">${groups[s].map(r=>r.key).sort().map(i=>`<option value="${esc(i)}" ${i===S.tower?"selected":""}>${esc(tLabel(i))}</option>`).join("")}</optgroup>`).join("") || "<option>—</option>";
   renderChart(); renderNet(); renderMap(); renderTowerMap(); renderTowerDetail(); renderWallWinds(); if(towerCard) renderTowerCard(); }
@@ -1821,6 +1841,66 @@ if("wakeLock" in navigator){ const wl=()=>navigator.wakeLock.request("screen").c
 updateArm(); renderThrBar(); renderTowerDetail(); renderLayerBar(); renderEvLog(); renderDemo(); tick();
 if(IN_CLAUDE){ brInit().then(()=>{ applyClaudeMode(); restart(); pollNWS(); fetchTeam(); }); }
 else { snapInit().then(()=>{ restart(); renderSnapNote(); }); pollNWS(); fetchTeam(); }
+
+/* ===== Customizable card layout (per viewer, saved in this browser) ===== */
+const LAYOUT_KEY="45ws_layout_v1";
+const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", tmapCard:"Wind tower map", tdCard:"Tower detail", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", netCard:"Wind trend", logCard:"Strike log", evPanel:"Event log"};
+const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:7, ringsCard:5, tmapCard:7, tdCard:5, "wp-KSC":6, "wp-CCSFS":6}, h:{}, hide:[]};
+let LAY=(()=>{ try{ const o=JSON.parse(localStorage.getItem(LAYOUT_KEY)||"null"); if(o && Array.isArray(o.order)) return {order:o.order, span:o.span||{}, h:o.h||{}, hide:o.hide||[]}; }catch(e){} return structuredClone(LAYOUT_DEF); })();
+function layoutSave(){ try{ localStorage.setItem(LAYOUT_KEY, JSON.stringify(LAY)); }catch(e){} }
+const dashEl=$("#dash"), cardEl=id=>document.getElementById(id);
+function minH(id){ return cardEl(id)?.classList.contains("mappanel")? 320 : 160; }
+function applyCard(id){ const el=cardEl(id); if(!el) return; const sp=LAY.span[id] ?? LAYOUT_DEF.span[id] ?? 12, h=LAY.h[id];
+  el.style.gridColumn=`span ${sp}`; el.classList.toggle("sized", !!h); if(h) el.style.setProperty("--ch", h+"px"); else el.style.removeProperty("--ch");
+  el.classList.toggle("uhide", LAY.hide.includes(id));
+  const cs=el.querySelector(".ccbar .cs"); if(cs) cs.textContent=`${sp}/12 wide · ${h? h+" px" : "auto height"}`; }
+function applyLayout(){ const ids=[...LAY.order.filter(id=>CARDS[id]), ...Object.keys(CARDS).filter(id=>!LAY.order.includes(id))];
+  for(const id of ids){ const el=cardEl(id); if(el) dashEl.appendChild(el); }
+  const ww=cardEl("wallWinds"); if(ww) dashEl.appendChild(ww);
+  ids.forEach(applyCard); renderHiddenList(); relayoutSoon(); }
+function renderHiddenList(){ const box=$("#lyHidden"); box.innerHTML = LAY.hide.filter(id=>CARDS[id]).map(id=>`<button type="button" class="btn sm" data-show="${id}">Show ${CARDS[id]}</button>`).join("");
+  box.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ LAY.hide=LAY.hide.filter(x=>x!==b.dataset.show); layoutSave(); applyCard(b.dataset.show); renderHiddenList(); relayoutSoon(); }); }
+let rlT; function relayoutSoon(){ clearTimeout(rlT); rlT=setTimeout(()=>{ try{ renderAllMaps(); renderChart(); renderNet(); }catch(e){} },120); }
+if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#tmap","#chart","#netChart"].forEach(q=>{ const el=$(q); if(el) ro.observe(el); }); }
+// edit overlay on every card
+for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
+  const cv=document.createElement("div"); cv.className="ccover"; cv.dataset.card=id;
+  cv.innerHTML=`<div class="ccbar"><span class="grip" aria-hidden="true">⠿</span><span class="cn">${CARDS[id]}</span><span class="cs"></span>
+    <button type="button" class="btn sm" data-act="auto">Auto height</button><button type="button" class="btn sm" data-act="full">Full width</button><button type="button" class="btn sm" data-act="hide">Hide</button></div>
+    <div class="rsz" title="Drag to resize" aria-hidden="true"></div>`;
+  el.appendChild(cv);
+  cv.querySelectorAll("[data-act]").forEach(b=>{ b.onpointerdown=e=>e.stopPropagation(); b.onclick=()=>{ const a=b.dataset.act;
+    if(a==="auto") delete LAY.h[id]; if(a==="full") LAY.span[id]=12; if(a==="hide" && !LAY.hide.includes(id)) LAY.hide.push(id);
+    layoutSave(); applyCard(id); renderHiddenList(); relayoutSoon(); }; });
+  // move: drag the card anywhere
+  cv.addEventListener("pointerdown",e=>{ if(e.target.closest(".rsz,button")||e.button) return; e.preventDefault();
+    const x0=e.clientX, y0=e.clientY; let moving=false, tgt=null;
+    const mv=ev=>{ if(!moving && Math.hypot(ev.clientX-x0, ev.clientY-y0)<5) return; moving=true; el.classList.add("dragging");
+      if(ev.clientY<70) window.scrollBy(0,-18); else if(ev.clientY>innerHeight-70) window.scrollBy(0,18);
+      const over=document.elementsFromPoint(ev.clientX,ev.clientY).map(n=>n.closest&&n.closest("#dash > section")).find(n=>n && n!==el && CARDS[n.id]);
+      if(tgt && tgt!==over) tgt.classList.remove("droptarget"); tgt=over||null; if(!tgt) return; tgt.classList.add("droptarget");
+      const r=tgt.getBoundingClientRect(), wide=r.width > dashEl.clientWidth*0.85;
+      const before = wide? ev.clientY < r.top+r.height/2 : ev.clientX < r.left+r.width/2;
+      if(before){ if(tgt.previousElementSibling!==el) dashEl.insertBefore(el,tgt); } else if(tgt.nextElementSibling!==el) dashEl.insertBefore(el,tgt.nextElementSibling); };
+    const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
+      el.classList.remove("dragging"); tgt?.classList.remove("droptarget");
+      if(moving){ LAY.order=[...dashEl.children].map(n=>n.id).filter(id=>CARDS[id]); layoutSave(); relayoutSoon(); } };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); });
+  // resize: drag the corner
+  const hz=cv.querySelector(".rsz");
+  hz.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation();
+    const narrow=matchMedia("(max-width:900px)").matches;
+    const mv=ev=>{ const r=el.getBoundingClientRect(), gap=parseFloat(getComputedStyle(dashEl).columnGap)||16, colW=(dashEl.clientWidth-11*gap)/12;
+      if(!narrow) LAY.span[id]=Math.max(3,Math.min(12,Math.round((ev.clientX-r.left+gap)/(colW+gap))));
+      LAY.h[id]=Math.max(minH(id), Math.round((ev.clientY-r.top)/10)*10); applyCard(id); };
+    const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); layoutSave(); relayoutSoon(); };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); }); }
+function setLayoutEdit(on){ document.body.classList.toggle("layout-edit",on); $("#btnLayout").setAttribute("aria-pressed",String(on)); }
+$("#btnLayout").onclick=()=>setLayoutEdit(!document.body.classList.contains("layout-edit"));
+$("#lyDone").onclick=()=>setLayoutEdit(false);
+$("#lyReset").onclick=()=>{ LAY=structuredClone(LAYOUT_DEF); layoutSave(); applyLayout(); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("layout-edit")) setLayoutEdit(false); });
+applyLayout();
 </script>
 </body>
 </html>

@@ -1,0 +1,53 @@
+name: Update data and deploy dashboard
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"     # every 5 minutes (GitHub may start it a few minutes late)
+  push:
+    branches: [main]
+  workflow_dispatch:           # adds a "Run workflow" button on the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - name: Collect observations
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: python scripts/collect.py site
+
+      - name: Add the dashboard
+        run: |
+          cp index.html site/
+          if [ -f settings.json ]; then cp settings.json site/; fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

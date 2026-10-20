@@ -418,9 +418,9 @@ body.wall .stile .sv{font-size:24px}
       <span class="dbz" id="dbzLegend"><span>Reflectivity</span><span class="bar"><i style="background:#04e9e7"></i><i style="background:#019ff4"></i><i style="background:#02fd02"></i><i style="background:#008e00"></i><i style="background:#fdf802"></i><i style="background:#fd9500"></i><i style="background:#fd0000"></i><i style="background:#bc0000"></i><i style="background:#f800fd"></i></span><span class="ticks">5 · 20 · 35 · 50 · 65 dBZ</span></span>
       <span><span class="sw" style="background:linear-gradient(90deg,#fff,#ffcf4a,#ff7a2e,#6e4a8c)"></span>new → old</span>
       <span id="lgMotion"><svg width="18" height="12"><path d="M1 6H14M10 2l4 4-4 4" fill="none" stroke="#fff" stroke-width="1.6"/></svg>Storm motion (15/30 min)</span>
-      <span class="hintsm">Click the map to measure range and bearing</span>
+      <span class="hintsm">Click a tower for its winds · click elsewhere to measure</span>
       <span id="lgEFM"><i class="dot" style="background:#3bc98a"></i><i class="dot" style="background:#f0c24a"></i><i class="dot" style="background:#ff5161"></i><span id="lgEFMt">Field mill |E|</span></span>
-      <span id="lgTowers"><svg width="12" height="12"><path d="M6 1L11 11H1Z" fill="#6cb6ff"/></svg>Wind tower</span>
+      <span id="lgTowers"><svg width="22" height="14" aria-hidden="true"><path d="M3 12L19 3M19 3l-2-6M15.5 5l-1.7-5M12 7l-1-3" fill="none" stroke="#6cb6ff" stroke-width="1.6" stroke-linecap="round" transform="translate(0,3)"/></svg>Wind tower barb (click a tower for details)</span>
     </div>
     </div>
     <div class="layerdock" id="layerDock" aria-label="Lightning plot layers">
@@ -469,7 +469,7 @@ body.wall .stile .sv{font-size:24px}
         <span><span class="dot" style="background:var(--strong)"></span>Strong</span>
         <span><span class="dot" style="background:var(--crit)"></span>Damaging</span>
         <span><span class="dot" style="background:#9aa8af"></span>No wind sensor</span>
-        <span>Arrows point downwind</span>
+        <span>Wind barbs point into the wind · half barb 5 kt · full barb 10 kt · pennant 50 kt (1-min average)</span>
       </div>
     </div>
   </section>
@@ -616,7 +616,7 @@ const DEFAULTS = {
   tz: "UTC", pollL: 30, pollW: 60, demo: 0,
   window: 30, buffer: 5, aC2G: true, aC2C: true, aNear: false, ringOff: [],
   units: "kt", sfcMax: 30, aSfc: true, aAgl: true, towers: "", ksc: "", ccsfs: "", repeat: 15,
-  wthr: { pk:{watch:18, strong:35, damaging:50}, avg:{watch:null, strong:null, damaging:null} },
+  wthr: { pk:{watch:null, strong:35, damaging:50}, avg:{watch:18, strong:null, damaging:null} },
   sound: true, notif: true, vib: true,
   src: {c2g:true, c2c:true, winds:true, efm:true}, showCG: true, showCC: true, showRings: true, showNames: true, showTowers: true, showWarn: true, nwsNm: 100, staleL: 3, staleW: 5, op: "", logFilter: "all",
   wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, tower: "", region: "rings", base: "sat"
@@ -987,6 +987,25 @@ function loopE(){ (async()=>{ if(!S.src.efm) return;
   catch(e){ setFeed("efm",false,e.message||String(e)); }
   if(!S.src.efm){ efmRows=[]; return; }
   renderMap(); clearTimeout(eTimer); eTimer=setTimeout(loopE, S.pollW*1000); })(); }
+// Standard wind barb: the staff points to where the wind comes FROM; barbs on the clockwise side
+// (pennant 50 kt, full barb 10 kt, half barb 5 kt; a circle for calm). Speed in knots, rounded to 5.
+function drawBarb(c, x, y, dir, kt, col, L=26){ if(dir==null || kt==null) return;
+  const stroke=(fn,w)=>{ c.beginPath(); fn(); c.lineWidth=w+2.4; c.strokeStyle="rgba(0,0,0,.75)"; c.stroke(); c.lineWidth=w; c.strokeStyle=col; c.stroke(); };
+  c.lineCap="round"; c.lineJoin="round";
+  if(kt<2.5){ stroke(()=>c.arc(x,y,6,0,Math.PI*2),1.6); return; }
+  const t=dir*Math.PI/180, ux=Math.sin(t), uy=-Math.cos(t), px=-uy, py=ux;   // u: toward the "from" end; p: clockwise side
+  const ex=x+ux*L, ey=y+uy*L, at=d=>[ex-ux*d, ey-uy*d], bl=L*0.42, sp=L*0.2;
+  let v=Math.round(kt/5)*5, pos=0; const parts=[];
+  while(v>=50){ parts.push(["P",pos]); pos+=sp*1.6; v-=50; }
+  while(v>=10){ parts.push(["F",pos]); pos+=sp; v-=10; }
+  if(v>=5){ if(!parts.length) pos=sp; parts.push(["H",pos]); }
+  stroke(()=>{ c.moveTo(x,y); c.lineTo(ex,ey); for(const [k,d] of parts){ const [ax,ay]=at(d);
+      if(k==="F"){ c.moveTo(ax,ay); c.lineTo(ax+px*bl+ux*bl*0.35, ay+py*bl+uy*bl*0.35); }
+      else if(k==="H"){ c.moveTo(ax,ay); c.lineTo(ax+px*bl*0.55+ux*bl*0.2, ay+py*bl*0.55+uy*bl*0.2); } } }, 1.7);
+  for(const [k,d] of parts){ if(k!=="P") continue; const [ax,ay]=at(d), [bx,by]=at(d+sp*1.4);
+    c.beginPath(); c.moveTo(ax,ay); c.lineTo(ax+px*bl+ux*bl*0.1, ay+py*bl+uy*bl*0.1); c.lineTo(bx,by); c.closePath();
+    c.lineWidth=2.4; c.strokeStyle="rgba(0,0,0,.75)"; c.stroke(); c.fillStyle=col; c.fill(); } }
+
 function drawEFM(c){ if(!S.showEFM || !S.src.efm) return; const mono=getComputedStyle(document.body).getPropertyValue("--f-mono");
   for(const r of efmRows){ const [x,y]=proj(r.lat,r.lon); const cat=efmCat(r.value), rad=view.Z>=10? 9 : 6;
     c.beginPath(); c.arc(x,y,rad,0,Math.PI*2); c.fillStyle=EFM_COL[cat]; c.globalAlpha=.9; c.fill(); c.globalAlpha=1;
@@ -1121,8 +1140,10 @@ function drawLightningLayer(c,w,h,mono){
   // towers
   const top={}; if(S.showTowers) for(const r of Object.values(towers)) if(!top[r.tower] || (r.hgt||0)>(top[r.tower].hgt||0)) top[r.tower]=r;
   for(const t of Object.values(top)){ if(t.lat==null||t.lon==null) continue; const [x,y]=proj(t.lat,t.lon); const L=effLevel(t.key);
-    c.fillStyle = L==="ok"? "#6cb6ff" : WL[L].col; const tz=view.Z>=9?5:3; c.beginPath(); c.moveTo(x,y-tz); c.lineTo(x+tz,y+tz*.8); c.lineTo(x-tz,y+tz*.8); c.closePath(); c.fill();
-    if(t.dir!=null && view.Z>=9){ const a=(t.dir+180)*Math.PI/180, len=10+Math.min(26,(t.avg||0)); c.strokeStyle=c.fillStyle; c.lineWidth=1.5; c.beginPath(); c.moveTo(x,y); c.lineTo(x+Math.sin(a)*len,y-Math.cos(a)*len); c.stroke(); }
+    const col = L==="ok"? "#6cb6ff" : WL[L].col, isSel = selectedSite()===t.tower;
+    if(view.Z>=8.5) drawBarb(c, x, y, t.dir, t.avg, col, view.Z>=10? 26 : 20);
+    const tz=view.Z>=9?5:3; c.fillStyle=col; c.beginPath(); c.moveTo(x,y-tz); c.lineTo(x+tz,y+tz*.8); c.lineTo(x-tz,y+tz*.8); c.closePath(); c.fill();
+    if(isSel){ c.lineWidth=2.5; c.strokeStyle="#fff"; c.beginPath(); c.arc(x,y,10,0,Math.PI*2); c.stroke(); }
     if(view.Z>=10.5){ c.font="10px "+mono; const tx=`${t.tower} ${fmt(t.avg)}/${fmt(t.pk1)}`; c.fillStyle="#000a"; c.fillRect(x+5,y+3,c.measureText(tx).width+4,12); c.fillStyle="#e3ecf0"; c.fillText(tx, x+7, y+12); } }
   drawEFM(c);
   // strikes (oldest first)
@@ -1175,8 +1196,7 @@ function drawTowerLayer(c,w,h,mono){
   for(const t of ts){ const [x,y]=proj(t.lat,t.lon); if(x<-40||y<-40||x>w+40||y>h+40) continue;
     const r=t.top, L=t.level, col = !r? "#9aa8af" : WL[L].col;
     const isSel = sel===t.tower, isHov = towerHover===t.tower;
-    if(r && r.dir!=null){ const a=(r.dir+180)*Math.PI/180, len=14+Math.min(30,(r.avg||0)*1.2); c.strokeStyle=col; c.lineWidth=2; c.beginPath(); c.moveTo(x,y); const ex=x+Math.sin(a)*len, ey=y-Math.cos(a)*len; c.lineTo(ex,ey); c.stroke();
-      c.beginPath(); c.moveTo(ex,ey); c.lineTo(ex-Math.sin(a-0.45)*7, ey+Math.cos(a-0.45)*7); c.lineTo(ex-Math.sin(a+0.45)*7, ey+Math.cos(a+0.45)*7); c.closePath(); c.fillStyle=col; c.fill(); }
+    if(r) drawBarb(c, x, y, r.dir, r.avg, col, view.Z>=10? 30 : 22);
     c.beginPath(); c.arc(x,y,isSel?8:6,0,Math.PI*2); c.fillStyle=col; c.fill(); c.lineWidth=isSel?3:1.5; c.strokeStyle=isSel?"#ffffff":"#0b1013"; c.stroke();
     if(showLbl || isSel || isHov){ c.font=(isSel?"600 ":"")+"11px "+mono; const tx = r? `${t.tower}  ${fmt(r.avg)}/${fmt(r.pk1)}` : t.tower; const tw=c.measureText(tx).width;
       c.fillStyle= isSel? "#e9a23bee" : "#000b"; c.fillRect(x+9,y-8,tw+8,16); c.fillStyle= isSel? "#1a1206" : "#e3ecf0"; c.fillText(tx,x+13,y+4); } }
@@ -1246,7 +1266,7 @@ function renderWinds(){ const u=S.units; const all=Object.values(towers);
   $("#otherRow").hidden = !groups.OTHER.length;
   const sel=$("#selTower");
   sel.innerHTML = SITES.filter(([s])=>groups[s].length).map(([s,l])=>`<optgroup label="${l}">${groups[s].map(r=>r.key).sort().map(i=>`<option value="${esc(i)}" ${i===S.tower?"selected":""}>${esc(tLabel(i))}</option>`).join("")}</optgroup>`).join("") || "<option>—</option>";
-  renderChart(); renderNet(); renderMap(); renderTowerMap(); renderTowerDetail(); renderWallWinds(); }
+  renderChart(); renderNet(); renderMap(); renderTowerMap(); renderTowerDetail(); renderWallWinds(); if(towerCard) renderTowerCard(); }
 document.querySelectorAll(".windTable th").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(sortK===k) sortDir*=-1; else {sortK=k; sortDir=(k==="tower"?1:-1);} renderWinds(); });
 $("#selTower").onchange=async e=>{ S.tower=e.target.value; save(); renderWinds(); await refreshSeries(); renderChart(); };
 
@@ -1312,7 +1332,7 @@ function renderNet(){ const cv=netCv, dpr=window.devicePixelRatio||1, w=cv.clien
   c.textAlign="center"; const ts=S.netHrs<=1?10:S.netHrs<=3?30:S.netHrs<=6?60:120;
   for(let t=Math.ceil(t0/(ts*60000))*ts*60000; t<=now; t+=ts*60000){ const x=X(t); c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke(); c.fillText(hhmmZ(t),x,h-6); }
   c.textAlign="left"; c.font="10px "+mono;
-  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null||v>ymax) continue; c.strokeStyle=WL[l].col+(kind==="pk"?"cc":"77"); c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); c.fillStyle=WL[l].col; c.fillText(l==="watch"? (kind==="pk"? WL[l].name : "avg "+WL[l].name) : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`,pl+4,Y(v)-3); }
+  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null||v>ymax) continue; c.strokeStyle=WL[l].col+(kind==="pk"?"cc":"77"); c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); c.fillStyle=WL[l].col; c.fillText(l==="watch"? WL[l].name : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`,pl+4,Y(v)-3); }
   if(!d.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText(!S.src.winds?"Winds feed is off.":"Waiting for tower readings.",pl+iw/2,pt+ih/2); return; }
   const path=(k)=>{ c.beginPath(); let on=false; for(const r of d){ if(r[k]==null){ on=false; continue; } const x=X(r.t), y=Y(r[k]); if(!on){ c.moveTo(x,y); on=true; } else c.lineTo(x,y); } };
   // raw per-minute maxima (faint)
@@ -1349,7 +1369,7 @@ function renderChart(){ const dpr=window.devicePixelRatio||1, w=chart.clientWidt
   for(let t=Math.ceil(t0/(tstep*60000))*tstep*60000; t<=now; t+=tstep*60000){ const x=X(t); c.beginPath(); c.moveTo(x,pt); c.lineTo(x,pt+ih); c.stroke(); c.fillText(hhmmZ(t),x,h-6); }
   const thr=(v,col)=>{ c.strokeStyle=col; c.setLineDash([5,4]); c.lineWidth=1.2; c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.setLineDash([]); };
   c.textAlign="left"; c.font="10px "+mono;
-  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null || v>ymax) continue; thr(v, WL[l].col+(kind==="pk"?"cc":"77")); c.fillStyle=WL[l].col; c.fillText(l==="watch"? (kind==="pk"? WL[l].name : "avg "+WL[l].name) : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`, pl+4, Y(v)-3); }
+  for(const kind of ["pk","avg"]) for(const l of LEVELS){ const v=T[kind][l]; if(v==null || v>ymax) continue; thr(v, WL[l].col+(kind==="pk"?"cc":"77")); c.fillStyle=WL[l].col; c.fillText(l==="watch"? WL[l].name : `${kind==="pk"?"pk":"avg"} ${WL[l].name.replace("Warning – ","")}`, pl+4, Y(v)-3); }
   if(!d.length){ c.fillStyle="#7a8a93"; c.font="13px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.textAlign="center"; c.fillText(!S.src.winds?"Winds feed is off.":S.tower?"No readings for this tower in the selected window.":"Waiting for tower readings.",pl+iw/2,pt+ih/2); return; }
   const line=(k,col,fill)=>{ const p=d.filter(r=>r[k]!=null); if(!p.length) return; c.beginPath(); p.forEach((r,i)=>{ const x=X(r.t),y=Y(r[k]); i?c.lineTo(x,y):c.moveTo(x,y); });
     if(fill){ c.save(); c.lineTo(X(p[p.length-1].t),Y(0)); c.lineTo(X(p[0].t),Y(0)); c.closePath(); c.fillStyle=fill; c.fill(); c.restore(); c.beginPath(); p.forEach((r,i)=>{ const x=X(r.t),y=Y(r[k]); i?c.lineTo(x,y):c.moveTo(x,y); }); }
@@ -1635,7 +1655,7 @@ let measure=null;
 function brg(la1,lo1,la2,lo2){ const t=Math.PI/180, y=Math.sin((lo2-lo1)*t)*Math.cos(la2*t), x=Math.cos(la1*t)*Math.sin(la2*t)-Math.sin(la1*t)*Math.cos(la2*t)*Math.cos((lo2-lo1)*t); return (Math.atan2(y,x)/t+360)%360; }
 const deg3 = b => String(Math.round(b)%360).padStart(3,"0")+"°";
 function ringEdgeNm(r,lat,lon){ let d=Infinity; for(const [la,lo] of r.pts) d=Math.min(d, hav(la,lo,lat,lon)); return d; }
-function renderMeasure(){ const el=$("#measure"); if(!measure){ el.hidden=true; return; } el.hidden=false; const {lat,lon}=measure, now=Date.now();
+function renderMeasure(){ const el=$("#measure"); if(!measure){ if(towerCard) renderTowerCard(); else el.hidden=true; return; } el.hidden=false; const {lat,lon}=measure, now=Date.now();
   const rings=RINGS.map(r=>({r, d:hav(r.lat,r.lon,lat,lon), b:brg(r.lat,r.lon,lat,lon), inside:inPoly(lat,lon,r.pts)})).sort((a,b)=>a.d-b.d);
   const tw=towerSites().map(t=>({t, d:hav(t.lat,t.lon,lat,lon), b:brg(t.lat,t.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0];
   const st=[...strikes.values()].filter(s=>now-s.t<=S.mapWin*60000).map(s=>({s,d:hav(s.lat,s.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0];
@@ -1653,8 +1673,26 @@ function drawMeasure(c){ if(!measure) return; const [x,y]=proj(measure.lat,measu
     c.font="600 11px "+getComputedStyle(document.body).getPropertyValue("--f-mono"); const tw=c.measureText(lab).width; c.fillStyle="#000c"; c.fillRect(mx-tw/2-4,my-9,tw+8,16); c.fillStyle="#e9a23b"; c.textAlign="center"; c.fillText(lab,mx,my+3); c.textAlign="left"; }
   c.strokeStyle="#000"; c.lineWidth=4; c.beginPath(); c.arc(x,y,7,0,Math.PI*2); c.moveTo(x-12,y); c.lineTo(x+12,y); c.moveTo(x,y-12); c.lineTo(x,y+12); c.stroke();
   c.strokeStyle="#e9a23b"; c.lineWidth=2; c.stroke(); }
-LM.click = (x,y)=>{ const [la,lo]=unproj(x,y); measure={lat:la,lon:lo}; renderMeasure(); renderMap(); };
-$("#map").title = "Drag to pan, scroll to zoom, click to measure range and bearing";
+function hitLightTower(x,y){ if(!S.showTowers || !S.src.winds) return null; let best=null, bd=14;
+  for(const t of towerSites()){ const [px,py]=proj(t.lat,t.lon); const d=Math.hypot(px-x,py-y); if(d<bd){ bd=d; best=t; } } return best; }
+let towerCard=null;
+function renderTowerCard(){ const el=$("#measure"); if(!towerCard) return; const name=towerCard;
+  const rows=latestAll.filter(r=>r.tower===name && hasWind(r)).sort((a,b)=>(b.hgt||0)-(a.hgt||0)); const t=towerSites().find(x=>x.tower===name);
+  if(!rows.length){ towerCard=null; el.hidden=true; return; }
+  const L=t? t.level : "ok", site=({KSC:"Kennedy",CCSFS:"Cape",OTHER:"Other"})[siteOf(rows[0])];
+  el.hidden=false;
+  el.innerHTML=`<div class="mh"><b>Tower</b><span>${esc(name)} · ${site}</span><span class="pill ${L}" style="min-width:0;font-size:10px">${WL[L].tag}</span><button type="button" class="ibtn sm" id="measureX" aria-label="Close">✕</button></div>
+    ${rows.map(r=>`<div class="mr"><span class="n">${fmt(r.hgt)} ft · ${r.dir==null?"—":String(Math.round(r.dir)).padStart(3,"0")+"° "+comp(r.dir)}</span><span class="d">${fmt(r.avg)} / ${fmt(r.pk1)}</span><span class="b">${esc(S.units)}</span></div>`).join("")}
+    <div class="note">Sustained / peak 1-min · ${Number.isFinite(rows[0].t)? hhmmZ(rows[0].t) : ""}</div>
+    <div style="margin-top:6px"><button type="button" class="btn sm" id="tcOpen">Tower details and trend</button></div>`;
+  $("#measureX").onclick=()=>{ towerCard=null; el.hidden=true; renderMap(); };
+  const o=$("#tcOpen"); if(document.body.classList.contains("wall")) o.hidden=true;
+  else o.onclick=()=>$("#tdTitle").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); }
+LM.click = (x,y)=>{ const t=hitLightTower(x,y);
+  if(t){ measure=null; towerCard=t.tower; selectTower(t.tower); renderTowerCard(); renderMap(); return; }
+  towerCard=null; const [la,lo]=unproj(x,y); measure={lat:la,lon:lo}; renderMeasure(); renderMap(); };
+LM.hover = (x,y)=>!!hitLightTower(x,y);
+$("#map").title = "Drag to pan, scroll to zoom, click a tower for its winds, click elsewhere to measure range and bearing";
 
 /* ---------------- Team settings: export, import, reset ---------------- */
 async function saveFile(name, text, type){
@@ -1700,7 +1738,7 @@ function setAllLayers(on){ for(const k of LAYER_KEYS) S[k]=on; S.radarOn = on &&
   save(); renderLayerBar(); renderWarnList(); renderMap(); }
 $("#lyAll").onclick=()=>setAllLayers(true);
 $("#lyNone").onclick=()=>setAllLayers(false);
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(measure){ measure=null; renderMeasure(); renderMap(); } else if(!$("#drawer").hidden && !document.body.classList.contains("wall")) openDrawer(false); } });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(measure || towerCard){ measure=null; towerCard=null; $("#measure").hidden=true; renderMap(); } else if(!$("#drawer").hidden && !document.body.classList.contains("wall")) openDrawer(false); } });
 document.querySelectorAll(".stile").forEach(t=>t.onclick=()=>{ const id=t.dataset.go; if(id==="none"){ $("#btnSettings").click(); return; } const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); });
 function etaLine(){ const e=Object.entries(storm.eta).filter(([n])=>!S.ringOff.includes(n)).sort((a,b)=>a[1].min-b[1].min); if(!e.length) return ""; return `Storm ETA ${e[0][0]} ${etaText(e[0][0])}`+(e.length>1?` · ${e.length-1} more ring${e.length>2?"s":""}`:""); }
 function setTile(id, cls, val, sub){ const el=$(id); el.className="stile "+cls; el.querySelector(".sv").textContent=val; el.querySelector(".ss").textContent=sub; el.title=sub; }

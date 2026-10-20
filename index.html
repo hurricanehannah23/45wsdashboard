@@ -328,6 +328,13 @@ body.wall .ov-tl{top:max(10px,env(safe-area-inset-top,0px))}
 .wbstat.crit{background:var(--crit);color:#fff} .wbstat.warn{background:var(--warn);color:#1c1503} .wbstat.ok{color:var(--ok)}
 body.wall.drawer-open{padding-right:0!important}
 body.wall.drawer-open .wallbar{right:calc(min(400px,100vw) + 10px)}
+/* demo switch */
+.feed.demosw[aria-pressed="true"]{border-color:var(--info);color:var(--info);background:color-mix(in srgb,var(--info) 12%,var(--panel))}
+.feed.demosw[aria-pressed="true"] .tg{background:var(--info)}
+.feed.demosw[aria-pressed="false"] .tg{background:var(--line)}
+.feed.demosw[aria-pressed="false"] .tg::after{left:2px;background:var(--muted)}
+.feed.demosw[aria-pressed="true"] .tg::after{left:12px;background:#fff}
+body.demo-on .ov-tl .ovt::after{content:" · DEMO";color:var(--info)}
 /* severe-alert toast */
 .toast{position:fixed;z-index:45;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 32px));display:grid;gap:4px;padding:12px 14px 12px 18px;border-radius:10px;background:var(--raised);border:1px solid var(--line2);box-shadow:0 16px 40px #000a;overflow:hidden}
 .toast::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc,var(--crit))}
@@ -365,6 +372,7 @@ body.wall .stile .sv{font-size:24px}
     <button type="button" class="feed" id="f-c2c" aria-pressed="true"><span class="tg"></span>Merlin CC <span class="st">--</span></button>
     <button type="button" class="feed" id="f-winds" aria-pressed="true"><span class="tg"></span>Winds <span class="st">--</span></button>
     <button type="button" class="feed" id="f-efm" aria-pressed="true"><span class="tg"></span>Field Mill <span class="st">--</span></button>
+    <button type="button" class="feed demosw" id="f-demo" aria-pressed="false" title="Switch between live data and simulated demo data"><span class="tg"></span>Demo data</button>
   </div>
   <div class="hright">
     <div class="clock"><span><b>Z</b><span id="clkZ">--:--:--</span></span><span><b>LCL</b><span id="clkL">--:--:--</span></span></div>
@@ -409,6 +417,7 @@ body.wall .stile .sv{font-size:24px}
         <span class="wbclock"><b>Z</b><span id="wbZ">--:--:--</span></span>
         <span class="wbstat" id="wbStat"></span>
         <button type="button" class="ibtn" id="wbBell" aria-label="Show alerts"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 16h15.4L18 12.6V9a6 6 0 0 0-6-6Zm-2.2 15a2.2 2.2 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="badge" id="wbBadge" hidden>0</span></button>
+        <button type="button" class="feed demosw" id="wbDemo" aria-pressed="false" title="Switch between live data and simulated demo data"><span class="tg"></span>Demo</button>
         <button type="button" class="btn sm" id="wbExit">Exit wall mode</button>
       </div>
       <div class="measure" id="measure" hidden></div>
@@ -718,11 +727,19 @@ function renderFeeds(){ for(const k in feeds){ const el=$("#f-"+k), f=feeds[k], 
   const bad = !S.demo && live.length && live.every(k=>feeds[k].ok===false);
   const n = $("#notice");
   if(bad && IN_CLAUDE){ n.hidden=false; n.innerHTML = `<strong>No feed is reachable.</strong><span class="mono" style="color:var(--dim)">${esc(live.map(k=>feeds[k].err).find(Boolean)||"")}</span>`; }
-  else if(bad){ n.hidden=false; n.innerHTML = `<strong>No feed is reachable.</strong><span>Check your network connection. If the API links open in a browser tab but not here, the browser is blocking cross-site requests: run the included proxy (wxproxy.py) and open the dashboard from it.</span><span class="mono" style="color:var(--dim)">${esc(live.map(k=>feeds[k].err).find(Boolean)||"")}</span><button class="btn" id="btnDemo">Show demo data</button>`; $("#btnDemo").onclick=()=>{S.demo=1;save();restart();}; }
-  else if(S.demo){ n.hidden=false; n.innerHTML = `<strong>Demo data.</strong><span>Strikes and winds are simulated so you can see how alerts behave.</span><button class="btn" id="btnLive">Switch to live APIs</button>`; $("#btnLive").onclick=()=>{S.demo=0;save();restart();}; }
+  else if(bad){ n.hidden=false; n.innerHTML = `<strong>No feed is reachable.</strong><span>Check your network connection. If the API links open in a browser tab but not here, the browser is blocking cross-site requests: run the included proxy (wxproxy.py) and open the dashboard from it.</span><span class="mono" style="color:var(--dim)">${esc(live.map(k=>feeds[k].err).find(Boolean)||"")}</span><button class="btn" id="btnDemo">Show demo data</button>`; $("#btnDemo").onclick=()=>setDemo(true); }
+  else if(S.demo){ n.hidden=false; n.innerHTML = `<strong>Demo data.</strong><span>Strikes and winds are simulated so you can see how alerts behave.</span><button class="btn" id="btnLive">Switch to live APIs</button>`; $("#btnLive").onclick=()=>setDemo(false); }
   else if(!live.length){ n.hidden=false; n.innerHTML = `<strong>All data sources are off.</strong><span>Turn a source back on with the switches at the top.</span>`; }
   else n.hidden=true;
 }
+function setDemo(on){ on=!!on; if(!!S.demo===on){ renderDemo(); return; }
+  S.demo = on? 1 : 0; save();
+  logEvent("system", on? "Demo data on" : "Demo data off (live data)", "", "", opName());
+  alerts.length=0; renderAlerts(); hideToast?.();                       // demo alerts aren't real; clear them either way
+  net.clear(); netCovered=Infinity; windHist.clear(); for(const k in windLvl) delete windLvl[k]; for(const k in efmLvl) delete efmLvl[k];
+  restart(); renderDemo(); renderLayerBar(); }
+function renderDemo(){ const on=!!S.demo; for(const id of ["#f-demo","#wbDemo"]){ const b=$(id); if(b) b.setAttribute("aria-pressed", String(on)); }
+  document.body.classList.toggle("demo-on", on); }
 function toggleSource(k){ S.src[k] = !S.src[k]; save(); Object.assign(feeds[k],{ok:null,t:0,err:"",since:Date.now()});
   logEvent("system", S.src[k]? "Feed turned on" : "Feed turned off", SRC[k], "", opName()); if(!S.src[k] && staleSt[k]) clearStale(k,true); rwReset=true;
   if(k==="winds" && S.src.winds) windSeeded=false;
@@ -731,6 +748,7 @@ function toggleSource(k){ S.src[k] = !S.src[k]; save(); Object.assign(feeds[k],{
   else { clearTimeout(lTimer[k]); if(S.src[k]){ lightningBaseline[k]=false; loopL(k); } else { for(const [key,st] of strikes) if(st.type===k) strikes.delete(key); renderLightning(); } }
   renderFeeds(); renderLayerBar(); }
 for(const k of ["c2g","c2c","winds","efm"]) $("#f-"+k).onclick = () => toggleSource(k);
+$("#f-demo").onclick = () => setDemo(!S.demo);
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------------- Alerts ---------------- */
@@ -1444,7 +1462,8 @@ $("#btnSave").onclick=e=>{ e.preventDefault();
   S.dataService=S.dataService.replace(/\/+$/,"").replace(/\/api(\/.*)?$/,"");
   { const lo=num($("#s_efmLow").value), hi=num($("#s_efmHigh").value); if(lo!=null) S.efmLow=lo; if(hi!=null) S.efmHigh=Math.max(hi, S.efmLow+1); }
   for(const k of ["pollL","pollW","window","buffer","repeat","sfcMax","staleL","staleW","nwsNm"]){ const v=num($("#s_"+k).value); if(v!=null) S[k]=v; }
-  S.pollL=Math.max(10,S.pollL); S.pollW=Math.max(15,S.pollW); S.demo=+$("#s_demo").value;
+  S.pollL=Math.max(10,S.pollL); S.pollW=Math.max(15,S.pollW); const wantDemo=+$("#s_demo").value;
+  if(wantDemo!==(+S.demo||0)){ setDemo(!!wantDemo); }
   for(const k of ["aC2G","aC2C","aNear","sound","notif","vib","aSfc","aAgl","etaOn","aEFM"]) S[k]=$("#s_"+k).checked;
   { const v=num($("#s_etaMin").value); if(v!=null) S.etaMin=Math.max(1,v); }
   for(const a of [...alerts]) if((a.group==="sfc"&&!S.aSfc)||(a.group==="agl"&&!S.aAgl)) alerts.splice(alerts.indexOf(a),1);
@@ -1585,11 +1604,12 @@ function setWall(on){ if(on && !$("#drawer").hidden) openDrawer(false); document
   for(const M of MAPS) M.view=null; setTimeout(()=>{ renderAllMaps(); renderWallWinds(); }, 60); }
 $("#btnWall").onclick=()=>setWall(!document.body.classList.contains("wall"));
 $("#wbExit").onclick=()=>setWall(false);
+$("#wbDemo").onclick=()=>setDemo(!S.demo);
 $("#wbBell").onclick=()=>openDrawer($("#drawer").hidden);
 function renderWallBar(){ if(!document.body.classList.contains("wall")) return; const d=new Date();
   $("#wbZ").textContent=`${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
   const t=$("#st-light"), st=$("#wbStat"); const cls=t.classList.contains("crit")?"crit":t.classList.contains("warn")?"warn":"ok";
-  st.className="wbstat "+cls; st.textContent = cls==="crit"? `LIGHTNING ${t.querySelector(".sv").textContent} RINGS` : cls==="warn"? (t.querySelector(".ss").textContent||"WATCH").slice(0,48) : "NO LIGHTNING IN RINGS";
+  st.className="wbstat "+cls; st.textContent = (S.demo? "DEMO · " : "") + (cls==="crit"? `LIGHTNING ${t.querySelector(".sv").textContent} RINGS` : cls==="warn"? (t.querySelector(".ss").textContent||"WATCH").slice(0,48) : "NO LIGHTNING IN RINGS");
   const n=alerts.length, b=$("#wbBadge"); b.hidden=!n; b.textContent=n; b.classList.toggle("hot", alerts.some(SEVERE)); }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("wall") && !$("#dlg").open) setWall(false); });
 if(location.hash==="#wall") setWall(true);
@@ -1780,7 +1800,7 @@ function applyClaudeMode(){ if(!IN_CLAUDE) return;
   n.innerHTML = BR.ok
     ? `<strong>Live data through the Claude app.</strong><span>Merlin, Winds and NWS pages load in the app's built-in browser; approve each site the first time it asks. Satellite and radar imagery aren't available in this version.</span>`
     : `<strong>Open this dashboard in the Claude desktop app.</strong><span>Live data loads through the desktop app's built-in browser, which this view doesn't have.</span><button class="btn" id="btnDemo2">Show demo data</button>`;
-  const d=$("#btnDemo2"); if(d) d.onclick=()=>{ S.demo=1; save(); restart(); n.hidden=true; };
+  const d=$("#btnDemo2"); if(d) d.onclick=()=>{ setDemo(true); n.hidden=true; };
   renderLayerBar(); renderAllMaps(); }
 
 /* ---------------- Boot ---------------- */
@@ -1788,7 +1808,7 @@ function tick(){ try{ renderStrip(); renderWallBar(); }catch(e){} if(SNAP.on && 
 setInterval(tick,1000); setInterval(()=>{ renderMap(); renderLog(); },15000);
 let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>{ for(const M of MAPS) M.view=null; renderAllMaps(); renderChart(); renderNet(); },150); });
 if("wakeLock" in navigator){ const wl=()=>navigator.wakeLock.request("screen").catch(()=>{}); wl(); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") wl(); }); }
-updateArm(); renderThrBar(); renderTowerDetail(); renderLayerBar(); renderEvLog(); tick();
+updateArm(); renderThrBar(); renderTowerDetail(); renderLayerBar(); renderEvLog(); renderDemo(); tick();
 if(IN_CLAUDE){ brInit().then(()=>{ applyClaudeMode(); restart(); pollNWS(); fetchTeam(); }); }
 else { snapInit().then(()=>{ restart(); renderSnapNote(); }); pollNWS(); fetchTeam(); }
 </script>

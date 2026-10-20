@@ -89,15 +89,23 @@ def winds_hist(now):
     return {"rows": rows, "window_start": start.isoformat()}
 
 
+def site_of(r):
+    """Kennedy (KSC) or Cape (CCSFS), using the same location rules as the dashboard."""
+    lat, lon = r.get("lat"), r.get("lon")
+    if not lat or not lon or lat < 28.375:
+        return "OTHER"
+    return "CCSFS" if lon > -80.612 and lat < 28.595 else "KSC"
+
+
 def winds_max(now, hist_rows, prev):
-    """Highest 1-min sustained and peak per minute and per sensor height, kept for 12 hours."""
-    points = {r["t"]: r["h"] for r in prev.get("rows", []) if "t" in r}
+    """Highest 1-min sustained and peak per minute, per site and sensor height, kept for 12 hours."""
+    points = {r["t"]: {k: v for k, v in r["h"].items() if "|" in k} for r in prev.get("rows", []) if "t" in r}
     fresh = {}
     for r in hist_rows:
         t = (r.get("reading_datetime") or "")[:16]
         if not t:
             continue
-        h = str(round(r["hgt"])) if r.get("hgt") is not None else "?"
+        h = site_of(r) + "|" + (str(round(r["hgt"])) if r.get("hgt") is not None else "?")
         e = fresh.setdefault(t + ":00Z", {}).setdefault(h, [None, None, "", ""])
         a, p = r.get("avg_spd_1min"), r.get("peak_spd_1min")
         if a is not None and a < 999 and (e[0] is None or a > e[0]):

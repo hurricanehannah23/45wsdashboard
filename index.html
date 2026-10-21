@@ -467,6 +467,8 @@ body.wall .stile .sv{font-size:24px}
     <div class="clock"><span><b>Z</b><span id="clkZ">--:--:--</span></span><span><b>LCL</b><span id="clkL">--:--:--</span></span></div>
     <button class="btn primary" id="btnArm">Enable alerts</button>
     <button type="button" class="ibtn" id="btnBell" aria-label="Show alerts" aria-expanded="false" title="Alerts"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 16h15.4L18 12.6V9a6 6 0 0 0-6-6Zm-2.2 15a2.2 2.2 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="badge" id="bellBadge" hidden>0</span></button>
+    <a class="btn sm qlink" id="lnk45ws" href="https://45thweathersquadron.nebula.spaceforce.mil" target="_blank" rel="noopener noreferrer" title="Open the 45th Weather Squadron website in a new tab">45WS Website <span aria-hidden="true">↗</span></a>
+    <a class="btn sm qlink" id="lnkNimbus" href="https://nimboard.rad.spaceforce.mil/nimboard" target="_blank" rel="noopener noreferrer" title="Open Nimbus in a new tab">Nimbus <span aria-hidden="true">↗</span></a>
     <a class="btn sm qlink" id="lnkAviation" href="https://nluchetti1.github.io/aviation_table_cape_canaveral/" target="_blank" rel="noopener noreferrer" title="Open the Cape Canaveral aviation table in a new tab">Aviation table <span aria-hidden="true">↗</span></a>
     <a class="btn sm qlink" id="lnkPlanning" href="https://cyclonecizek.github.io/ERPlanningForecast/" target="_blank" rel="noopener noreferrer" title="Open the planning forecast in a new tab">Planning forecast <span aria-hidden="true">↗</span></a>
     <a class="btn sm qlink" id="lnkRotator" href="https://video.ibm.com/channel/HHMlzseVWZU" target="_blank" rel="noopener noreferrer" title="Open the Rotator video channel in a new tab">Rotator <span aria-hidden="true">↗</span></a>
@@ -1048,9 +1050,19 @@ async function pollWindsLatest(){
     list = rowsOf(await getJSON(q(apiBase("winds"), "/winds/range", [`date>=${apiDate(from)}`, `date<=${apiDate(new Date(+now+60000))}`]))).map(normWind); }
   return list;
 }
+const SH = { data:null, at:0 };   // 24-hour tower history written by the GitHub collector (data/winds_hist.json)
+async function snapHist(){ if(SH.data && Date.now()-SH.at<120000) return SH.data;
+  try{ const r=await fetch("data/winds_hist.json?t="+Date.now(),{cache:"no-store"}); if(r.ok){ SH.data=await r.json(); SH.at=Date.now(); } }catch(e){} return SH.data; }
 async function pollWindSeries(key, hrs){
   const [tower, h] = String(key).split("@");
-  if(SNAP.on){ const f=await snapFeed("winds_hist","winds"); return rowsOf(f.rows).filter(e=>String(e.tower).trim()===tower).map(normWind).filter(r=>Number.isFinite(r.t) && (h==null || Math.round(r.hgt)===+h)).sort((a,b)=>a.t-b.t); }
+  if(SNAP.on){ const cut=Date.now()-hrs*3600000, byMin=new Map();
+    const H=await snapHist();
+    if(H && H.s){ for(const [k,rows] of Object.entries(H.s)){ const [tw,hh]=k.split("@"); if(tw!==tower || (h!=null && hh!==h)) continue;
+        for(const [m,avg,pk1,pk10,dir] of rows){ const t=(H.t0+m)*60000; if(t>=cut) byMin.set(t,{tower, hgt:hh==null?null:+hh, t, avg, pk1, pk10, dir}); } } }
+    try{ const f=await snapFeed("winds_hist","winds");   // the last hour, refreshed every run
+      for(const r of rowsOf(f.rows).filter(e=>String(e.tower).trim()===tower).map(normWind)) if(Number.isFinite(r.t) && r.t>=cut && (h==null || Math.round(r.hgt)===+h)) byMin.set(Math.floor(r.t/60000)*60000, r); }
+    catch(e){ if(!byMin.size) throw e; }
+    return [...byMin.values()].sort((a,b)=>a.t-b.t); }
   const now = new Date(), from = new Date(+now - hrs*3600000);
   const parts = [`date>=${apiDate(from)}`, `date<=${apiDate(new Date(+now+60000))}`, `tower=${encodeURIComponent(tower)}`, "sort=asc"];
   return rowsOf(await getJSON(q(apiBase("winds"), "/winds/range", parts))).map(normWind).filter(r=>Number.isFinite(r.t) && (h==null || Math.round(r.hgt)===+h)).sort((a,b)=>a.t-b.t);

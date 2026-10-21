@@ -179,7 +179,7 @@ legend{padding:0 6px;color:var(--accent);font-size:12px;font-weight:600;letter-s
 .warnlist .w b{font-weight:600} .warnlist .w span{color:var(--muted)} .warnlist .w em{font-style:normal;font-family:var(--f-mono);color:var(--muted)}
 .warnlist .none{color:var(--dim)}
 #evTable td{text-align:left;white-space:normal;font-size:12px} #evTable td:first-child{white-space:nowrap} #evTable th{cursor:default}
-#evTable td.c-lightning{color:var(--crit)} #evTable td.c-wind{color:var(--strong)} #evTable td.c-nws{color:#ffb020} #evTable td.c-system{color:var(--info)}
+#evTable td.c-lightning{color:var(--crit)} #evTable td.c-wind{color:var(--strong)} #evTable td.c-nws{color:#ffb020} #evTable td.c-system{color:var(--info)} #evTable td.c-temp{color:#9fd3ff}
 .opl{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .opl input{width:70px;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-family:var(--f-mono);text-transform:uppercase}
 .col{display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -196,6 +196,52 @@ body.wall #map{max-height:none;aspect-ratio:auto;height:max(420px,calc(100vh - 3
 body.wall .ring .nm{font-size:18px} body.wall .ring .sm{font-size:13px}
 body.wall .ring .pill{font-size:14px;min-width:120px;padding:5px 8px}
 body.wall .alert .t{font-size:17px}
+
+/* ===== Tabs ===== */
+.tabs{display:flex;gap:4px;margin:14px 0 0;border-bottom:1px solid var(--line2);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:transparent;color:var(--muted);font:600 14px/1 var(--f-ui);padding:11px 16px 12px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border-radius:6px 6px 0 0}
+.tab:hover{color:var(--fg);background:var(--panel)}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent);background:var(--panel)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tb{font:600 11px/1 var(--f-mono);padding:3px 6px;border-radius:999px;background:var(--raised);color:var(--muted)}
+.tb:empty{display:none}
+.tb.warn{background:var(--warn);color:#1a1004} .tb.strong{background:var(--strong);color:#1a1004} .tb.crit{background:var(--crit);color:#fff} .tb.info{background:var(--info);color:#06121c}
+.dash:not(.on){display:none}
+body.wall .tabs, body.wall #dashT, body.wall #dashA, body.wall #dashD{display:none!important}
+body.wall #dash{display:block!important}
+/* temperature tab */
+.ttiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:12px}
+.ttile{border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:8px;padding:10px 12px;background:var(--bg);display:grid;gap:3px}
+.ttile .tn{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ttile .tv{font:600 30px/1.1 var(--f-mono)} .ttile .ts{font-size:12px;color:var(--muted)}
+.ttile.near{border-left-color:var(--warn)} .ttile.freeze{border-left-color:var(--strong)} .ttile.hard{border-left-color:var(--crit)}
+#tTable td.tc-near{color:var(--warn)} #tTable td.tc-freeze{color:var(--strong)} #tTable td.tc-hard{color:var(--crit);font-weight:700}
+#fcTable td.tc-near{color:var(--warn)} #fcTable td.tc-freeze{color:var(--strong)} #fcTable td.tc-hard{color:var(--crit);font-weight:700}
+#tTable td:nth-child(1), #tTable td:nth-child(2), #tTable th:nth-child(1), #tTable th:nth-child(2), #fcTable td:first-child, #fcTable th:first-child, #fcTable td:last-child{text-align:left}
+.lchart{width:100%;height:260px;display:block}
+body:not(.wall) #tTrendCard.sized > .pb, body:not(.wall) #fcCard.sized > .pb{flex:1 1 auto;min-height:0} body:not(.wall) #tTrendCard.sized .lchart, body:not(.wall) #fcCard.sized .lchart{height:100%;min-height:140px}
+body:not(.wall) .dash > section.sized > .obs, body:not(.wall) .dash > section.sized > .afd{flex:1 1 auto;min-height:0;overflow:auto;max-height:none}
+.coldnws{padding:8px 12px 12px;display:grid;gap:6px;font-size:13px} .coldnws:empty{display:none}
+.coldnws .cw{border-left:4px solid var(--info);padding:6px 10px;background:var(--bg);border-radius:4px}
+.coldnws .cw b{color:var(--fg)}
+/* admin tab */
+.obs{padding:6px 12px 12px;display:grid;gap:10px;overflow:auto;max-height:620px}
+.stn{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;display:grid;gap:6px;min-width:0}
+.stn .sh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.stn .sid{font:700 15px/1 var(--f-mono)} .stn .snm{color:var(--muted);font-size:12px} .stn .sage{margin-left:auto;font:12px var(--f-mono);color:var(--dim)}
+.fcat{font:700 11px/1 var(--f-mono);padding:3px 7px;border-radius:3px;color:#06121c;background:var(--dim)}
+.fcat.VFR{background:#3bc98a} .fcat.MVFR{background:#6cb6ff} .fcat.IFR{background:#ff5161;color:#fff} .fcat.LIFR{background:#d36cff;color:#fff}
+.stn .dec{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px} .stn .dec span{color:var(--muted)} .stn .dec b{color:var(--fg);font-weight:600;font-family:var(--f-mono)}
+.raw{font:13px/1.5 var(--f-mono);color:var(--fg);white-space:pre-wrap;word-break:break-word;margin:0}
+.raw .grp{display:block;padding-left:2ch;text-indent:-2ch}
+.stn details summary{cursor:pointer;color:var(--muted);font-size:12px} .stn details .raw{color:var(--muted);margin-top:4px}
+.afd{padding:10px 14px 14px;overflow:auto;max-height:720px}
+.afd pre{font:13px/1.55 var(--f-mono);white-space:pre-wrap;word-break:break-word;margin:0;color:var(--fg)}
+.afd .sec{color:var(--accent);font-weight:700;scroll-margin-top:8px}
+.afdjump{display:flex;flex-wrap:wrap;gap:4px}
+.afdjump button{font-size:12px}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
 
 /* ===== Customizable card layout ===== */
 .dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:16px;align-items:stretch}
@@ -449,12 +495,18 @@ body.wall .stile .sv{font-size:24px}
   <div class="dbody"><div id="alerts" aria-live="assertive"></div><div class="dempty" id="noAlerts">No active alerts.</div></div>
 </aside>
 
+<nav class="tabs" id="tabs" role="tablist" aria-label="Dashboard sections">
+  <button type="button" role="tab" class="tab" data-tab="lw" id="tab-lw" aria-selected="true"><span>Lightning &amp; Wind</span><span class="tb" id="tbLW"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="temp" id="tab-temp" aria-selected="false"><span>Temperature</span><span class="tb" id="tbT"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="admin" id="tab-admin" aria-selected="false"><span>TAF/METAR</span><span class="tb" id="tbA"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="afd" id="tab-afd" aria-selected="false"><span>NWS Discussion</span><span class="tb" id="tbD"></span></button>
+</nav>
 <div class="layouttop" id="layoutTop" role="region" aria-label="Layout editing">
   <span><b>Layout mode</b> · drag cards to move them, drag a corner to resize</span>
   <button type="button" class="btn sm primary" id="lyReset2">↺ Back to default layout</button>
   <button type="button" class="btn sm" id="lyDone2">Done</button>
 </div>
-<div class="dash" id="dash">
+<div class="dash on" id="dash" data-tab="lw" role="tabpanel" aria-labelledby="tab-lw">
   <section class="panel mappanel" id="lightPanel">
     <div class="mapbox">
       <canvas id="map" class="mapcv" aria-label="Map of lightning rings, strikes and wind towers"></canvas>
@@ -588,6 +640,46 @@ body.wall .stile .sv{font-size:24px}
 
 </div>
 
+<div class="dash" id="dashT" data-tab="temp" role="tabpanel" aria-labelledby="tab-temp">
+  <section class="panel" id="tempCard">
+    <div class="ph"><h2>Tower temperatures</h2><span class="lvl" id="tLvl" hidden></span><span class="meta" id="tMeta">--</span></div>
+    <div class="ttiles" id="tTiles"></div>
+    <div class="tablewrap" style="max-height:460px"><table id="tTable"><thead><tr><th>Tower</th><th>Site</th><th>Hgt (ft)</th><th>Time</th><th>Temp °F</th><th>Dew pt</th><th>RH %</th><th>Wind chill</th><th>Low 12 h</th><th>Level</th></tr></thead><tbody></tbody></table></div>
+    <div class="legend" id="tLegend"></div>
+  </section>
+  <section class="panel" id="fcCard">
+    <div class="ph"><h2>NWS forecast lows</h2><span class="meta" id="fcMeta">--</span></div>
+    <div class="pb" style="padding:8px 8px 0"><canvas id="fcChart" class="lchart" aria-label="NWS hourly temperature forecast for Kennedy and the Cape"></canvas></div>
+    <div class="legend" id="fcLegend"></div>
+    <div class="tablewrap"><table id="fcTable"><thead><tr><th>Night</th><th>Kennedy low</th><th>Cape low</th><th>Coldest hour</th><th>Flag</th></tr></thead><tbody></tbody></table></div>
+    <div class="coldnws" id="coldNws"></div>
+  </section>
+  <section class="panel" id="tTrendCard">
+    <div class="ph"><h2>Temperature trend · coldest sensor</h2><span class="meta" id="ttMeta"></span><div class="seg" id="segTHrs" aria-label="Time window"></div></div>
+    <div class="pb" style="padding:8px 8px 4px"><canvas id="tChart" class="lchart" aria-label="Coldest tower temperature over time at Kennedy and the Cape"></canvas></div>
+    <div class="legend" id="ttLegend"></div>
+  </section>
+</div>
+
+<div class="dash" id="dashA" data-tab="admin" role="tabpanel" aria-labelledby="tab-admin">
+  <section class="panel" id="metarCard">
+    <div class="ph"><h2>METARs</h2><span class="meta" id="mtMeta">--</span><button type="button" class="btn sm" id="btnMtRefresh">Refresh</button></div>
+    <div class="obs" id="mtBody"></div>
+  </section>
+  <section class="panel" id="tafCard">
+    <div class="ph"><h2>TAFs</h2><span class="meta" id="tfMeta">--</span></div>
+    <div class="obs" id="tfBody"></div>
+  </section>
+</div>
+
+<div class="dash" id="dashD" data-tab="afd" role="tabpanel" aria-labelledby="tab-afd">
+  <section class="panel" id="afdCard">
+    <div class="ph"><h2 id="afdTitle">Area forecast discussion · NWS Melbourne</h2><span class="meta" id="afdMeta">--</span>
+      <div class="afdjump" id="afdJump"></div><a class="btn sm qlink" id="afdLink" href="https://forecast.weather.gov/product.php?site=MLB&amp;issuedby=MLB&amp;product=AFD" target="_blank" rel="noopener noreferrer">Open at NWS <span aria-hidden="true">↗</span></a></div>
+    <div class="afd" id="afdBody"><div class="empty">Loading…</div></div>
+  </section>
+</div>
+
 <div class="layoutbar" id="layoutBar" role="region" aria-label="Layout editing">
   <span class="lbt"><b>Customizing layout.</b> Drag a card and drop it where the orange line shows (◀ ▶ nudge it one place, Esc cancels). Drag its corner to resize. Saved in this browser only.</span>
   <button type="button" class="btn sm primary" id="lyReset">↺ Back to default layout</button>
@@ -639,6 +731,20 @@ body.wall .stile .sv{font-size:24px}
         <div class="fr"><label for="s_repeat">Re-alert after (min)</label><input type="number" id="s_repeat" min="1" max="240"></div>
         <div class="hint">Wind levels are set under the trend chart. An alert fires when a tower moves up a level (Sustained Advisory, Warning – Strong, Warning – Damaging), and again after the re-alert time if it stays there.</div>
       </fieldset>
+      <fieldset><legend>Temperature</legend>
+        <div class="fr"><label for="s_frzNear">Near freezing at or below (°F)</label><input type="number" id="s_frzNear" step="0.5"></div>
+        <div class="fr"><label for="s_frzFreeze">Freeze at or below (°F)</label><input type="number" id="s_frzFreeze" step="0.5"></div>
+        <div class="fr"><label for="s_frzHard">Hard freeze at or below (°F)</label><input type="number" id="s_frzHard" step="0.5"></div>
+        <div class="fr"><label for="s_frzN">Must be reached (times)</label><input type="number" id="s_frzN" min="1" max="20"></div>
+        <div class="fr"><label for="s_frzMin">within (min)</label><input type="number" id="s_frzMin" min="1" max="120"></div>
+        <div class="fr"><label for="s_frzHgt">Use sensors at or below (ft)</label><input type="number" id="s_frzHgt" min="0" max="500"></div>
+        <div class="fr"><label>Alert</label><div><label class="chk"><input type="checkbox" id="s_aFrz">Alert when a site reaches a temperature level</label></div></div>
+        <div class="hint">A site's level is its coldest sensor that has stayed at or below a threshold the set number of times in the time window, so a single bad reading doesn't trigger it.</div>
+      </fieldset>
+      <fieldset><legend>TAF/METAR &amp; discussion</legend>
+        <div class="fr"><label for="s_stations">METAR / TAF stations</label><input type="text" id="s_stations" placeholder="KXMR,KTTS,KCOF,KMLB"></div>
+        <div class="fr"><label for="s_afdOffice">Forecast discussion office</label><input type="text" id="s_afdOffice" maxlength="3" placeholder="MLB"></div>
+      </fieldset>
       <fieldset><legend>Alerts</legend>
         <div class="fr"><label>Signals</label><div><label class="chk"><input type="checkbox" id="s_sound">Sound</label><label class="chk"><input type="checkbox" id="s_notif">Desktop notification</label><label class="chk"><input type="checkbox" id="s_vib">Vibrate</label></div></div>
         <div class="fr"><label></label><div><button type="button" class="btn" id="btnTest">Test alert</button></div></div>
@@ -666,6 +772,8 @@ let RINGS = DEFAULT_RINGS;
 /* ---------------- Settings ---------------- */
 const viaProxy = /^https?:$/.test(location.protocol) && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 const DEFAULTS = {
+  frzNear: 36, frzFreeze: 32, frzHard: 27, frzN: 2, frzMin: 10, frzHgt: 60, aFrz: true, tHrs: 12,
+  stations: "KXMR,KTTS,KCOF,KMLB", afdOffice: "MLB",
   c2g: viaProxy ? "/api/c2g" : "https://codiapi-lightningc2g.rad.spaceforce.mil",
   c2c: viaProxy ? "/api/c2c" : "https://codiapi-lightningc2c.rad.spaceforce.mil",
   winds: viaProxy ? "/api/winds" : "https://codiapi-winds1.rad.spaceforce.mil",
@@ -787,6 +895,7 @@ function setDemo(on){ on=!!on; if(!!S.demo===on){ renderDemo(); return; }
   logEvent("system", on? "Demo data on" : "Demo data off (live data)", "", "", opName());
   alerts.length=0; renderAlerts(); hideToast?.();                       // demo alerts aren't real; clear them either way
   net.clear(); netCovered=Infinity; windHist.clear(); for(const k in windLvl) delete windLvl[k]; for(const k in efmLvl) delete efmLvl[k];
+  if(typeof resetTemp==="function") resetTemp();
   restart(); renderDemo(); renderLayerBar(); }
 function renderDemo(){ const on=!!S.demo; for(const id of ["#f-demo","#wbDemo"]){ const b=$(id); if(b) b.setAttribute("aria-pressed", String(on)); }
   document.body.classList.toggle("demo-on", on); }
@@ -813,7 +922,7 @@ function raise({key, kind, level, title, detail, group}){
   let a = alerts.find(x=>x.key===key);
   if(a){ Object.assign(a,{level,title,detail,group,t:now,fresh:true}); alerts.splice(alerts.indexOf(a),1); alerts.unshift(a); }
   else { a = {key,kind,level,title,detail,group,t:now,fresh:true}; alerts.unshift(a); }
-  for(const g of ['lightning','sfc','agl','other']){ const inG=alerts.filter(x=>x.group===g); for(const x of inG.slice(15)) alerts.splice(alerts.indexOf(x),1); }
+  for(const g of ['lightning','sfc','agl','temp','other']){ const inG=alerts.filter(x=>x.group===g); for(const x of inG.slice(15)) alerts.splice(alerts.indexOf(x),1); }
   const severe = level==="crit"||level==="strong"||level==="damaging";
   beep(kind==="clear"? TONE.clear : kind==="lightning"? TONE.lightning : severe? TONE.crit : kind==="near"? TONE.near : TONE.warn);
   if(armed && S.vib && navigator.vibrate) try{ navigator.vibrate(kind==="lightning"||severe?[300,120,300,120,500]:[200,100,200]); }catch(e){}
@@ -824,11 +933,11 @@ function raise({key, kind, level, title, detail, group}){
 }
 let flashTimer=null; const baseTitle=document.title;
 function flashTitle(t){ clearInterval(flashTimer); let n=0; flashTimer=setInterval(()=>{ document.title = (n++%2)? baseTitle : "⚡ "+t; if(n>20){clearInterval(flashTimer);document.title=baseTitle;} },800); }
-const AGROUPS = [["lightning","Lightning",""],["sfc","Surface winds",()=>`≤ ${S.sfcMax} ft`],["agl","Above-ground winds",()=>`> ${S.sfcMax} ft`],["other","NWS & system",""]];
+const AGROUPS = [["lightning","Lightning",""],["sfc","Surface winds",()=>`≤ ${S.sfcMax} ft`],["agl","Above-ground winds",()=>`> ${S.sfcMax} ft`],["temp","Temperature",()=>`sensors ≤ ${S.frzHgt} ft`],["other","NWS & system",""]];
 const SEVERE = a => a.kind==="lightning" || a.kind==="stale" || a.level==="crit" || a.level==="strong" || a.level==="damaging";
 function openDrawer(on){ const d=$("#drawer"); d.hidden=!on; if(on && typeof hideToast==="function") hideToast(); document.body.classList.toggle("drawer-open", on); $("#btnBell").setAttribute("aria-expanded", String(on));
   for(const M of MAPS) M.view=M.view; setTimeout(()=>{ renderAllMaps(); renderChart(); }, 30); }
-function renderBell(){ const n=alerts.length, hot=alerts.some(SEVERE), b=$("#bellBadge"); b.hidden=!n; b.textContent=n; b.classList.toggle("hot", hot);
+function renderBell(){ if(typeof renderTabBadges==="function") renderTabBadges(); const n=alerts.length, hot=alerts.some(SEVERE), b=$("#bellBadge"); b.hidden=!n; b.textContent=n; b.classList.toggle("hot", hot);
   $("#drawerCount").textContent = n? `${n} active` : ""; $("#noAlerts").hidden = !!n; $("#btnAckAll").hidden = !n; }
 function renderAlerts(){ const box=$("#alerts"); box.innerHTML=""; renderBell();
   for(const [g,name,sub] of AGROUPS){ const list=alerts.filter(a=>a.group===g); if(!list.length) continue;
@@ -836,7 +945,7 @@ function renderAlerts(){ const box=$("#alerts"); box.innerHTML=""; renderBell();
     col.innerHTML=`<div class="agh">${name}<span class="n">${list.length}</span>${sub?`<span class="sub">${sub()}</span>`:""}${list.length>1?'<button class="btn">Ack all</button>':""}</div>`;
     const ab=col.querySelector(".agh button"); if(ab) ab.onclick=()=>{ for(const x of list) alerts.splice(alerts.indexOf(x),1); logEvent(alertCat(list[0]), "Acknowledged", `${list.length} ${name.toLowerCase()} alerts`, list.map(x=>x.title).slice(0,6).join("; "), opName()); renderAlerts(); };
     for(const a of list){ const d=document.createElement("div"); d.className=`alert ${a.kind} ${a.level}${a.fresh?" fresh":""}`; a.fresh=false;
-      d.innerHTML=`<span class="k">${a.kind==="lightning"?"Lightning":a.kind==="clear"?"All clear":a.kind==="eta"?"Storm approaching":a.kind==="efm"?"Field mill":a.kind==="near"?"Nearby":a.kind==="nws"?"NWS":a.kind==="stale"?"System":a.group==="agl"?"Above ground":a.group==="sfc"?"Surface":"Wind"} · ${hhmmssZ(a.t)}Z</span><div><div class="t">${esc(a.title)}</div><div class="d">${esc(a.detail)}</div></div><button class="btn" aria-label="Acknowledge">Ack</button>`;
+      d.innerHTML=`<span class="k">${a.kind==="lightning"?"Lightning":a.kind==="clear"?"All clear":a.kind==="eta"?"Storm approaching":a.kind==="efm"?"Field mill":a.kind==="near"?"Nearby":a.kind==="nws"?"NWS":a.kind==="stale"?"System":a.kind==="temp"?"Temperature":a.kind==="coldnws"?"NWS cold":a.group==="agl"?"Above ground":a.group==="sfc"?"Surface":"Wind"} · ${hhmmssZ(a.t)}Z</span><div><div class="t">${esc(a.title)}</div><div class="d">${esc(a.detail)}</div></div><button class="btn" aria-label="Acknowledge">Ack</button>`;
       d.querySelector("button").onclick=()=>{ alerts.splice(alerts.indexOf(a),1); logEvent(alertCat(a), "Acknowledged", a.title, a.detail, opName()); renderAlerts(); }; col.appendChild(d); }
     box.appendChild(col); }
 }
@@ -950,7 +1059,7 @@ let latestAll = [];
 function absorbWinds(list){ latestAll = list.map(r=>(r.key=keyOf(r),r)); for(const r of latestAll){ pushHist(r); netAdd(r); } for(const r of list){ if(!hasWind(r)) continue; r.key = keyOf(r); const cur = towers[r.key]; if(!cur || (r.t||0) >= (cur.t||0)) towers[r.key] = r; }
   // borrow temperature from a sensor-only level of the same tower when the wind level has none
   for(const r of list){ if(hasWind(r) || r.tmp==null) continue; for(const w of Object.values(towers)) if(w.tower===r.tower && w.tmp==null) w.tmp=r.tmp; }
-  checkWindAlerts(); }
+  checkWindAlerts(); tempAbsorb(list); }
 const WL = { ok:{name:"Below threshold", tag:"BELOW", col:"#3bc98a"}, watch:{name:"Sustained Advisory", tag:"ADVISORY", col:"#f0c24a"},
   strong:{name:"Warning – Strong", tag:"WARN · STRONG", col:"#ff8a3d"}, damaging:{name:"Warning – Damaging", tag:"WARN · DAMAGING", col:"#ff5161"} };
 const LEVELS = ["watch","strong","damaging"];
@@ -987,7 +1096,7 @@ function checkWindAlerts(){ const now = Date.now();
 const demo = (()=>{ let cell = {lat:28.66, lon:-80.95, vlat:-0.0016, vlon:0.0042}, n=0, t0=Date.now();
   const tw = RINGS.slice(0,10).map((r,i)=>({id:String(i+1).padStart(4,"0"), lat:r.lat+0.01, lon:r.lon-0.01, base:8+i*1.6, hgt:[54,54,90,162,54,204,54,54,492,54][i]}));
   const hist = {};
-  function windAt(w,t){ const k=(t-t0)/60000, b=w.base+6*Math.sin(k/22+w.base)+3*Math.sin(k/5.3); const avg=Math.max(0,b+Math.random()*2); return {tower:w.id,t,dir:(200+40*Math.sin(k/40+w.base)+360)%360,avg,pk1:avg*(1.25+Math.random()*.25),pk10:avg*1.6,tmp:78+3*Math.sin(k/90),hgt:w.hgt,lat:w.lat,lon:w.lon}; }
+  function windAt(w,t){ const k=(t-t0)/60000, b=w.base+6*Math.sin(k/22+w.base)+3*Math.sin(k/5.3); const avg=Math.max(0,b+Math.random()*2); return {tower:w.id,t,dir:(200+40*Math.sin(k/40+w.base)+360)%360,avg,pk1:avg*(1.25+Math.random()*.25),pk10:avg*1.6,tmp:33.5+(w.base-8)*0.9+3.2*Math.sin(k/70+w.base),hgt:w.hgt,lat:w.lat,lon:w.lon}; }
   return {
     strikes(type){ const out=[]; cell.lat+=cell.vlat; cell.lon+=cell.vlon; if(cell.lon>-80.35){cell.lon=-80.95;cell.lat=28.4+Math.random()*.4;}
       const k = type==="c2g"? 2+Math.floor(Math.random()*3) : 4+Math.floor(Math.random()*6);
@@ -1168,6 +1277,29 @@ function drawTiles(c,kind,w,h,alpha){ const z=Math.max(3,Math.min(isRadar(kind)?
       else if(kind==="sat"){ // fall back to a coarser cached tile while this one loads
         for(let up=1;up<=4;up++){ const zz=z-up; if(zz<0) break; const p=tile(kind,zz,xx>>up,ty>>up); if(p.complete&&!p.failed&&p.naturalWidth){ const f=1<<up, sx=(xx%f)*256/f, sy=(ty%f)*256/f; c.drawImage(p,sx,sy,256/f,256/f,Math.floor(px),Math.floor(py),Math.ceil(sz)+1,Math.ceil(sz)+1); break; } } } } }
   c.globalAlpha=1; }
+// County and state outlines for the dark map (US Census boundaries via the us-atlas dataset), loaded once when first needed
+const OUTLINE_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json";
+const OUT = { arcs:null, state:null, loading:false, failed:false };
+function flatIdx(a, out){ for(const x of a){ if(Array.isArray(x)) flatIdx(x,out); else out.add(x<0? ~x : x); } return out; }
+async function loadOutlines(){ if(OUT.loading || OUT.arcs || OUT.failed) return; OUT.loading=true;
+  try{ let topo; try{ const r=await fetch(OUTLINE_URL); if(!r.ok) throw new Error("HTTP "+r.status); topo=await r.json(); }
+       catch(e){ if(BR.ok) topo=await brGet(OUTLINE_URL); else throw e; }
+    const tf=topo.transform||{scale:[1,1],translate:[0,0]}, [sx,sy]=tf.scale, [tx,ty]=tf.translate;
+    const BB={la0:23, la1:37.5, lo0:-95, lo1:-74};                       // keep the Southeast only
+    const arcs=topo.arcs.map(a=>{ let x=0,y=0; const p=new Float64Array(a.length*2); let la0=90,la1=-90,lo0=180,lo1=-180;
+      a.forEach(([dx,dy],i)=>{ x+=dx; y+=dy; const lo=x*sx+tx, la=y*sy+ty; p[2*i]=lo; p[2*i+1]=la; if(la<la0)la0=la; if(la>la1)la1=la; if(lo<lo0)lo0=lo; if(lo>lo1)lo1=lo; });
+      return (la1<BB.la0||la0>BB.la1||lo1<BB.lo0||lo0>BB.lo1)? null : {p,la0,la1,lo0,lo1}; });
+    const o=topo.objects||{}, st=new Set(); for(const k of ["states","nation"]) if(o[k]) for(const g of o[k].geometries||[]) flatIdx(g.arcs||[], st);
+    OUT.arcs=arcs; OUT.state=st; }
+  catch(e){ OUT.failed=true; }
+  finally{ OUT.loading=false; if(OUT.arcs) renderAllMaps(); } }
+function drawOutlines(c,w,h){ if(!OUT.arcs){ loadOutlines(); return; }
+  const [laT,loL]=unproj(0,0), [laB,loR]=unproj(w,h), pass=(state)=>{ c.beginPath();
+    OUT.arcs.forEach((a,i)=>{ if(!a || OUT.state.has(i)!==state) return; if(a.la1<laB||a.la0>laT||a.lo1<loL||a.lo0>loR) return;
+      const p=a.p; for(let k=0;k<p.length;k+=2){ const [x,y]=proj(p[k+1],p[k]); k? c.lineTo(x,y) : c.moveTo(x,y); } });
+    c.stroke(); };
+  c.lineJoin="round"; c.strokeStyle="rgba(150,180,195,.26)"; c.lineWidth=0.8; pass(false);    // county lines
+  c.strokeStyle="rgba(175,205,220,.6)"; c.lineWidth=1.4; pass(true); }                       // state lines and coast
 function ageColor(f){ // 0 new -> 1 old
   const stops=[[255,255,255],[255,207,74],[255,122,46],[110,74,140]]; const x=Math.min(.999,Math.max(0,f))*(stops.length-1), i=Math.floor(x), t=x-i; const a=stops[i],b=stops[i+1];
   return `rgb(${a.map((v,j)=>Math.round(v+(b[j]-v)*t)).join(",")})`; }
@@ -1176,6 +1308,7 @@ function renderView(M){ use(M); const dpr=window.devicePixelRatio||1, w=map.clie
   if(!view){ fitBox(M.fit()); M.view=view; } const c=mctx; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
   c.fillStyle="#0b1013"; c.fillRect(0,0,w,h);
   if(S.base!=="dark"){ drawTiles(c,"sat",w,h,1); c.fillStyle="rgba(6,10,14,.38)"; c.fillRect(0,0,w,h); drawTiles(c,"lbl",w,h,.85); }
+  else drawOutlines(c,w,h);
   // graticule
   const mono=getComputedStyle(document.body).getPropertyValue("--f-mono");
   c.strokeStyle= S.base==="dark"? "#1b252b" : "rgba(255,255,255,.10)"; c.lineWidth=1; c.font="10px "+mono; c.fillStyle= S.base==="dark"? "#4a5961" : "rgba(230,240,245,.6)";
@@ -1354,7 +1487,7 @@ function renderThrBar(){ const T=S.wthr, u=S.units, v=x=>x==null?"":x;
 /* ---------------- Network winds: highest sustained and peak across all towers ---------------- */
 const net = new Map();   // minute (ms) -> { "<height ft>": [maxAvg, maxPeak, towerAvg, towerPeak] }
 let netCovered = Infinity, netFilling = false;
-function netAdd(r){ if(!hasWind(r) || !Number.isFinite(r.t)) return; const m=Math.floor(r.t/60000)*60000; let p=net.get(m); if(!p){ p={}; net.set(m,p); }
+function netAdd(r){ tAdd(r); if(!hasWind(r) || !Number.isFinite(r.t)) return; const m=Math.floor(r.t/60000)*60000; let p=net.get(m); if(!p){ p={}; net.set(m,p); }
   const hk = siteOf(r)+"|"+(r.hgt==null ? "?" : String(Math.round(r.hgt))), e = p[hk] || (p[hk]=[null,null,"",""]);
   if(r.avg!=null && (e[0]==null || r.avg>e[0])){ e[0]=r.avg; e[2]=r.tower; }
   if(r.pk1!=null && (e[1]==null || r.pk1>e[1])){ e[1]=r.pk1; e[3]=r.tower; } }
@@ -1379,7 +1512,7 @@ function netSeries(){ const t0=Date.now()-S.netHrs*3600e3, out=[];
   return out; }
 // Load older readings for the network chart (in 30-minute pieces so each request stays small)
 async function netBackfill(){ if(netFilling || !S.src.winds) return;
-  if(S.demo){ if(netCovered!==-1){ for(const k of new Set(Object.values(towers).map(r=>r.tower))) for(const r of demo.series(k, 12)) netAdd(r); netCovered=-1; renderNet(); } return; }
+  if(S.demo){ if(netCovered!==-1){ for(const k of new Set(Object.values(towers).map(r=>r.tower))) for(const r of demo.series(k, 12)) netAdd(r); netCovered=-1; renderNet(); if(T_READY) try{ renderTChart(); renderTemp(); }catch(e){} } return; }
   netFilling=true;
   try{
     if(SNAP.on){ const f=await snapFeed("winds_max","winds"); for(const row of rowsOf(f.rows)){ const t=Date.parse(row.t); if(!Number.isFinite(t)) continue; const p=net.get(t)||{}; for(const [hk,e] of Object.entries(row.h||{})){ const cur=p[hk]; if(!cur){ p[hk]=e.slice(); continue; } if(e[0]!=null && (cur[0]==null||e[0]>cur[0])){ cur[0]=e[0]; cur[2]=e[2]; } if(e[1]!=null && (cur[1]==null||e[1]>cur[1])){ cur[1]=e[1]; cur[3]=e[3]; } } net.set(t,p); } }
@@ -1388,7 +1521,7 @@ async function netBackfill(){ if(netFilling || !S.src.winds) return;
         const rows=rowsOf(await getJSON(q(apiBase("winds"),"/winds/range",[`date>=${apiDate(new Date(start))}`,`date<=${apiDate(new Date(end))}`])));
         for(const e of rows) netAdd(normWind(e)); netCovered=start; end=start; renderNet(); } } }
   catch(e){ $("#netMeta").textContent = "Couldn't load earlier readings: "+(e.message||e); }
-  finally{ netFilling=false; netPrune(); renderNet(); } }
+  finally{ netFilling=false; netPrune(); renderNet(); if(T_READY) try{ renderTChart(); renderTemp(); }catch(e){} } }
 const netCv=$("#netChart"), nctx=netCv.getContext("2d"); let netHover=null;
 function renderNet(){ const cv=netCv, dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w) return;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
@@ -1509,6 +1642,7 @@ const dlg=$("#dlg");
 function fillForm(){ for(const k of ["c2g","c2c","winds","efm","dataService","efmLow","efmHigh","tz","pollL","pollW","window","buffer","units","towers","ksc","ccsfs","repeat","sfcMax","staleL","staleW","nwsNm"]) $("#s_"+k).value=S[k]; $("#s_demo").value=String(S.demo);
   for(const k of ["aC2G","aC2C","aNear","sound","notif","vib","aSfc","aAgl","etaOn","aEFM"]) $("#s_"+k).checked=!!S[k];
   $("#s_etaMin").value=S.etaMin; renderTeamStatus();
+  for(const k of ["frzNear","frzFreeze","frzHard","frzN","frzMin","frzHgt","stations","afdOffice"]) $("#s_"+k).value=S[k]; $("#s_aFrz").checked=!!S.aFrz;
   $("#s_rings").innerHTML = RINGS.map((r,i)=>`<label class="chk"><input type="checkbox" data-r="${i}" ${S.ringOff.includes(r.name)?"":"checked"}>${esc(r.name)}</label>`).join(""); }
 $("#btnSettings").onclick=()=>{ fillForm(); dlg.showModal(); };
 $("#btnSave").onclick=e=>{ e.preventDefault();
@@ -1521,6 +1655,13 @@ $("#btnSave").onclick=e=>{ e.preventDefault();
   if(wantDemo!==(+S.demo||0)){ setDemo(!!wantDemo); }
   for(const k of ["aC2G","aC2C","aNear","sound","notif","vib","aSfc","aAgl","etaOn","aEFM"]) S[k]=$("#s_"+k).checked;
   { const v=num($("#s_etaMin").value); if(v!=null) S.etaMin=Math.max(1,v); }
+  { const advBefore=S.stations+S.afdOffice;
+    for(const k of ["frzNear","frzFreeze","frzHard","frzN","frzMin","frzHgt"]){ const v=num($("#s_"+k).value); if(v!=null) S[k]=v; }
+    S.frzN=Math.max(1,Math.round(S.frzN)); S.frzMin=Math.max(1,S.frzMin); S.aFrz=$("#s_aFrz").checked;
+    S.stations=$("#s_stations").value.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean).join(",")||DEFAULTS.stations;
+    S.afdOffice=($("#s_afdOffice").value.trim().toUpperCase()||"MLB").slice(0,3);
+    if(!S.aFrz) for(const a of [...alerts]) if(a.group==="temp") alerts.splice(alerts.indexOf(a),1);
+    setTimeout(()=>{ renderTemp(); renderFcst(); if(advBefore!==S.stations+S.afdOffice){ pollAvwx(); pollAfd(); } },0); }
   for(const a of [...alerts]) if((a.group==="sfc"&&!S.aSfc)||(a.group==="agl"&&!S.aAgl)) alerts.splice(alerts.indexOf(a),1);
   if(sfcBefore!==JSON.stringify([S.sfcMax,S.aSfc,S.aAgl])) for(const t in windLvl) delete windLvl[t];
   renderAlerts();
@@ -1544,9 +1685,9 @@ function parseRingFile(t){ const out=[]; for(const blk of t.split(/End:/i)){ con
 /* ---------------- Event log ---------------- */
 const LOGK = LS+".log"; let evlog=[];
 try{ evlog = JSON.parse(localStorage.getItem(LOGK)||"[]"); if(!Array.isArray(evlog)) evlog=[]; }catch(e){ evlog=[]; }
-const CAT = { lightning:"Lightning", wind:"Wind", nws:"NWS", system:"System" };
+const CAT = { lightning:"Lightning", wind:"Wind", temp:"Temp", nws:"NWS", system:"System" };
 const opName = () => (S.op||"").trim().toUpperCase() || "—";
-const alertCat = a => a.group==="lightning" ? "lightning" : a.kind==="wind" ? "wind" : a.kind==="nws" ? "nws" : "system";
+const alertCat = a => a.group==="temp" ? "temp" : a.group==="lightning" ? "lightning" : a.kind==="wind" ? "wind" : a.kind==="nws" ? "nws" : "system";
 let evRaf=0;
 function logEvent(cat, type, where, detail, by){ evlog.unshift({t:Date.now(), cat, type, where:where||"", detail:detail||"", by:by||""});
   const cut=Date.now()-7*864e5; evlog=evlog.filter(e=>e.t>cut).slice(0,3000);
@@ -1558,7 +1699,7 @@ function renderEvLog(){ const list=evFiltered(), tb=$("#evTable tbody");
       return `<tr><td class="mono">${d.toISOString().slice(5,10)} ${hhmmssZ(e.t)}</td><td class="c-${e.cat}">${CAT[e.cat]||e.cat}</td><td>${esc(e.type)}</td><td>${esc(e.where)}</td><td>${esc(e.detail)}</td><td class="mono">${esc(e.by)}</td></tr>`; }).join("")
     : `<tr><td colspan="6" class="empty">No events yet. Ring activations and all-clears, wind level changes, NWS warnings, stale feeds and acknowledgements are recorded here.</td></tr>`;
   $("#evMeta").textContent = `${evlog.length} event${evlog.length===1?"":"s"} · last 7 days, kept in this browser`; }
-seg($("#segLog"), [["all","All"],["lightning","Lightning"],["wind","Wind"],["nws","NWS"],["system","System"]].map(([v,l],i)=>[i,l]), ["all","lightning","wind","nws","system"].indexOf(S.logFilter), v=>{ S.logFilter=["all","lightning","wind","nws","system"][v]; save(); renderEvLog(); });
+seg($("#segLog"), [["all","All"],["lightning","Lightning"],["wind","Wind"],["temp","Temp"],["nws","NWS"],["system","System"]].map(([v,l],i)=>[i,l]), ["all","lightning","wind","temp","nws","system"].indexOf(S.logFilter), v=>{ S.logFilter=["all","lightning","wind","temp","nws","system"][v]; save(); renderEvLog(); });
 $("#opInit").value = S.op||""; $("#opInit").onchange=e=>{ S.op=e.target.value.trim().toUpperCase(); e.target.value=S.op; save(); };
 $("#btnCsv").onclick=()=>{ const rows=[["time_utc","category","event","location","detail","by"], ...evFiltered().slice().reverse().map(e=>[new Date(e.t).toISOString(), CAT[e.cat]||e.cat, e.type, e.where, e.detail, e.by])];
   const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
@@ -1815,7 +1956,7 @@ function setAllLayers(on){ for(const k of LAYER_KEYS) S[k]=on; S.radarOn = on &&
 $("#lyAll").onclick=()=>setAllLayers(true);
 $("#lyNone").onclick=()=>setAllLayers(false);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(measure || towerCard){ measure=null; towerCard=null; $("#measure").hidden=true; renderMap(); } else if(!$("#drawer").hidden && !document.body.classList.contains("wall")) openDrawer(false); } });
-document.querySelectorAll(".stile").forEach(t=>t.onclick=()=>{ const id=t.dataset.go; if(id==="none"){ $("#btnSettings").click(); return; } const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); });
+document.querySelectorAll(".stile").forEach(t=>t.onclick=()=>{ const id=t.dataset.go; if(id==="none"){ $("#btnSettings").click(); return; } const el=document.getElementById(id); if(el && typeof setTab==="function"){ const p=el.closest(".dash"); if(p) setTab(p.dataset.tab); } if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); });
 function etaLine(){ const e=Object.entries(storm.eta).filter(([n])=>!S.ringOff.includes(n)).sort((a,b)=>a[1].min-b[1].min); if(!e.length) return ""; return `Storm ETA ${e[0][0]} ${etaText(e[0][0])}`+(e.length>1?` · ${e.length-1} more ring${e.length>2?"s":""}`:""); }
 function setTile(id, cls, val, sub){ const el=$(id); el.className="stile "+cls; el.querySelector(".sv").textContent=val; el.querySelector(".ss").textContent=sub; el.title=sub; }
 function renderStrip(){ const now=Date.now(), W=S.window*60000;
@@ -1867,10 +2008,236 @@ updateArm(); renderThrBar(); renderTowerDetail(); renderLayerBar(); renderEvLog(
 if(IN_CLAUDE){ brInit().then(()=>{ applyClaudeMode(); restart(); pollNWS(); fetchTeam(); }); }
 else { snapInit().then(()=>{ restart(); renderSnapNote(); }); pollNWS(); fetchTeam(); }
 
+/* ===== Temperature: tower temps, freeze levels, trend ===== */
+var T_READY = false;   // set at the end of this section; wind data can arrive before it runs
+const TL = { ok:{name:"Above thresholds", tag:"OK", al:""}, near:{name:"Near freezing", tag:"NEAR FRZ", al:"warn"}, freeze:{name:"Freeze", tag:"FREEZE", al:"strong"}, hard:{name:"Hard freeze", tag:"HARD FRZ", al:"crit"} };
+const TRANK = {ok:0, near:1, freeze:2, hard:3};
+const TCOL = { ok:"#3bc98a", near:"#f0c24a", freeze:"#ff8a3d", hard:"#ff5161" };
+const SITE_NM = { KSC:"Kennedy", CCSFS:"Cape", OTHER:"Other" };
+const tObs = {};      // sensor key -> Map(minute -> temp)
+const tnet = new Map(); // minute -> {"SITE|hgt": [temp, tower]}  (coldest per site and height)
+let tLatest = [];     // latest temperature rows
+const tAlertLvl = {}; // site -> level already alerted
+const thrOf = L => L==="hard"? S.frzHard : L==="freeze"? S.frzFreeze : S.frzNear;
+const tInst = v => v==null? "ok" : v<=S.frzHard? "hard" : v<=S.frzFreeze? "freeze" : v<=S.frzNear? "near" : "ok";
+const fmtT = (v,d=1) => v==null||!Number.isFinite(v)? "—" : (Math.round(v*10**d)/10**d).toFixed(d);
+function windChill(tf, kt){ if(tf==null || kt==null) return null; const mph=kt*1.15078; if(tf>50 || mph<=3) return null;
+  return 35.74+0.6215*tf-35.75*mph**0.16+0.4275*tf*mph**0.16; }
+function tAdd(r){ if(!T_READY || !r || r.tmp==null || !Number.isFinite(r.t)) return; const m=Math.floor(r.t/60000)*60000, k=keyOf(r);
+  (tObs[k] || (tObs[k]=new Map())).set(m, r.tmp);
+  const sk=siteOf(r)+"|"+(r.hgt==null? "?" : Math.round(r.hgt)); let p=tnet.get(m); if(!p){ p={}; tnet.set(m,p); }
+  const e=p[sk]; if(!e || r.tmp<e[0]) p[sk]=[r.tmp, r.tower]; }
+function tPrune(){ const cut=Date.now()-26*3600e3; for(const t of tnet.keys()) if(t<cut) tnet.delete(t);
+  for(const m of Object.values(tObs)) for(const t of m.keys()) if(t<cut) m.delete(t); }
+function tLevel(k){ const m=tObs[k]; if(!m) return "ok"; const cut=Date.now()-S.frzMin*60000; const rec=[...m].filter(([t])=>t>=cut).map(([,v])=>v);
+  for(const L of ["hard","freeze","near"]) if(rec.filter(v=>v<=thrOf(L)).length>=S.frzN) return L; return "ok"; }
+function tLow(k, hrs=12){ const m=tObs[k]; if(!m) return null; const cut=Date.now()-hrs*3600e3; let lo=null; for(const [t,v] of m) if(t>=cut && (lo==null||v<lo)) lo=v; return lo; }
+function towerWind(tower){ let best=null; for(const w of Object.values(towers)) if(w.tower===tower && w.avg!=null && (!best || (w.hgt??999)<(best.hgt??999))) best=w; return best; }
+function tempAbsorb(list){ if(!T_READY) return; for(const r of list) tAdd(r); tLatest=list.filter(r=>r.tmp!=null).map(r=>(r.key=r.key||keyOf(r), r)); tPrune(); checkTempAlerts(); renderTemp(); renderTChart(); }
+function tRows(){ return tLatest.map(r=>{ const w=towerWind(r.tower); return {...r, site:siteOf(r), wc:windChill(r.tmp, w&&w.avg), lvl:tLevel(r.key), low:tLow(r.key)}; }); }
+const tUsed = r => r.hgt==null || r.hgt<=S.frzHgt;
+function siteSummary(rows){ const out={}; for(const site of ["KSC","CCSFS"]){ const rs=rows.filter(r=>r.site===site && tUsed(r));
+    if(!rs.length){ out[site]=null; continue; } const cold=rs.reduce((a,b)=>b.tmp<a.tmp?b:a); const worst=rs.reduce((a,b)=>TRANK[b.lvl]>TRANK[a.lvl]?b:a);
+    const wcs=rs.map(r=>r.wc).filter(v=>v!=null); out[site]={cold, lvl:worst.lvl, worst, wc:wcs.length? Math.min(...wcs) : null, n:rs.length}; } return out; }
+function checkTempAlerts(){ const sum=siteSummary(tRows());
+  for(const site of ["KSC","CCSFS"]){ const x=sum[site]; if(!x) continue; const L=x.lvl, prev=tAlertLvl[site]||"ok", nm=SITE_NM[site];
+    if(L===prev) continue; tAlertLvl[site]=L;
+    const r=x.worst, det=`Coldest sensor ${r.tower} · ${r.hgt==null?"?":Math.round(r.hgt)} ft at ${fmtT(r.tmp)}°F${L!=="ok"?` (≤ ${thrOf(L)}°F at least ${S.frzN} time${S.frzN>1?"s":""} in ${S.frzMin} min)`:""}${x.wc!=null?` · wind chill ${fmtT(x.wc,0)}°F`:""}.`;
+    if(L==="ok"){ const a=alerts.find(a=>a.key==="temp:"+site); if(a){ alerts.splice(alerts.indexOf(a),1); renderAlerts(); } logEvent("temp","Above thresholds",nm,det); continue; }
+    logEvent("temp", (TRANK[L]>TRANK[prev]?"":"Eased to ")+TL[L].name, nm, det);
+    if(!S.aFrz) continue;
+    if(TRANK[L]>TRANK[prev]) raise({key:"temp:"+site, kind:"temp", group:"temp", level:TL[L].al, title:`${TL[L].name} at ${nm}: ${fmtT(r.tmp)}°F`, detail:det});
+    else { const a=alerts.find(a=>a.key==="temp:"+site); if(a){ a.title=`${TL[L].name} at ${nm}: ${fmtT(r.tmp)}°F`; a.detail=det; a.level=TL[L].al; renderAlerts(); } } } }
+function renderTemp(){ const rows=tRows().sort((a,b)=>a.tmp-b.tmp), sum=siteSummary(rows);
+  const worst=["KSC","CCSFS"].map(s=>sum[s]).filter(Boolean).reduce((a,b)=>!a||TRANK[b.lvl]>TRANK[a.lvl]?b:a, null);
+  const lv=$("#tLvl"); lv.hidden=!worst||worst.lvl==="ok"; if(worst){ lv.textContent=TL[worst.lvl].tag; lv.style.background=TCOL[worst.lvl]; lv.style.color=worst.lvl==="hard"?"#fff":"#1a1004"; }
+  $("#tMeta").textContent = !S.src.winds? "Winds feed is off" : rows.length? `${rows.length} temperature sensors · levels use sensors ≤ ${S.frzHgt} ft` : "Waiting for tower readings";
+  $("#tTiles").innerHTML = ["KSC","CCSFS"].map(site=>{ const x=sum[site]; if(!x) return `<div class="ttile"><span class="tn">${SITE_NM[site]}</span><span class="tv">—</span><span class="ts">No temperature sensors ≤ ${S.frzHgt} ft</span></div>`;
+    return `<div class="ttile ${x.lvl}"><span class="tn">${SITE_NM[site]} · coldest</span><span class="tv">${fmtT(x.cold.tmp)}°F</span>
+      <span class="ts">${esc(x.cold.tower)} · ${x.cold.hgt==null?"?":Math.round(x.cold.hgt)} ft · ${TL[x.lvl].name}${x.wc!=null?` · wind chill ${fmtT(x.wc,0)}°F`:""}</span></div>`; }).join("");
+  $("#tTable tbody").innerHTML = rows.length? rows.map(r=>`<tr${tUsed(r)?"":' style="opacity:.55"'}><td>${esc(r.tower)}</td><td>${SITE_NM[r.site]||r.site}</td><td>${r.hgt==null?"—":Math.round(r.hgt)}</td><td>${Number.isFinite(r.t)?hhmmZ(r.t):"—"}</td>
+      <td class="tc-${tInst(r.tmp)}">${fmtT(r.tmp)}</td><td>${fmtT(r.dp)}</td><td>${fmtT(r.rh,0)}</td><td>${fmtT(r.wc,0)}</td><td class="tc-${tInst(r.low)}">${fmtT(r.low)}</td>
+      <td><span class="lvl" style="background:${TCOL[r.lvl]};color:${r.lvl==="hard"?"#fff":"#1a1004"}">${TL[r.lvl].tag}</span></td></tr>`).join("")
+    : `<tr><td colspan="10" class="empty">${S.src.winds? "Waiting for tower readings." : "Turn on the Winds feed to see tower temperatures."}</td></tr>`;
+  $("#tLegend").innerHTML = ["near","freeze","hard"].map(L=>`<span><span class="dot" style="background:${TCOL[L]}"></span>${TL[L].name} ≤ ${thrOf(L)}°F</span>`).join("")+`<span>Level needs ${S.frzN} reading${S.frzN>1?"s":""} in ${S.frzMin} min · faded rows are above ${S.frzHgt} ft and not used for levels · wind chill uses the tower's lowest wind sensor</span>`;
+  renderTabBadges(); }
+
+/* ---- line chart shared by the temperature trend and the forecast ---- */
+function lineChart(cv, o){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h);
+  const font=getComputedStyle(document.body).getPropertyValue("--f-mono")||"monospace"; c.font="11px "+font;
+  const pl=38, pr=12, pt=12, pb=22, iw=w-pl-pr, ih=h-pt-pb, vals=o.series.flatMap(s=>s.pts.map(p=>p[1]));
+  if(!vals.length){ c.fillStyle="#7a8a93"; c.textAlign="center"; c.fillText(o.empty||"No data yet",pl+iw/2,pt+ih/2); return; }
+  let lo=Math.min(...vals), hi=Math.max(...vals); for(const t of o.thr||[]) if(t.v>=lo-8 && t.v<=hi+8){ lo=Math.min(lo,t.v); hi=Math.max(hi,t.v); }
+  lo=Math.floor((lo-2)/5)*5; hi=Math.ceil((hi+2)/5)*5; if(hi-lo<10) hi=lo+10;
+  const X=t=>pl+(t-o.t0)/(o.t1-o.t0)*iw, Y=v=>pt+(1-(v-lo)/(hi-lo))*ih;
+  for(const n of o.shade||[]){ const a=Math.max(o.t0,n[0]), b=Math.min(o.t1,n[1]); if(b>a){ c.fillStyle="rgba(108,182,255,.06)"; c.fillRect(X(a),pt,X(b)-X(a),ih); } }
+  c.strokeStyle="#ffffff14"; c.fillStyle="#7a8a93"; c.textAlign="right"; c.lineWidth=1;
+  const step=(hi-lo)>40?10:5; for(let v=lo; v<=hi; v+=step){ c.beginPath(); c.moveTo(pl,Y(v)); c.lineTo(w-pr,Y(v)); c.stroke(); c.fillText(v+"°",pl-5,Y(v)+4); }
+  const span=o.t1-o.t0, tick=[0.5,1,2,3,6,12,24].map(h=>h*3600e3).find(tk=>iw/(span/tk)>=(tk>=6*3600e3?62:52)) || 24*3600e3;
+  c.textAlign="center"; for(let t=Math.ceil(o.t0/tick)*tick; t<=o.t1; t+=tick){ c.beginPath(); c.moveTo(X(t),pt); c.lineTo(X(t),pt+ih); c.stroke();
+    const d=new Date(t); c.fillText(tick>=6*3600e3? `${pad(d.getUTCDate())}/${pad(d.getUTCHours())}Z` : `${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}Z`, X(t), h-6); }
+  for(const t of o.thr||[]){ if(t.v<lo||t.v>hi) continue; c.setLineDash([5,4]); c.strokeStyle=t.col+"cc"; c.beginPath(); c.moveTo(pl,Y(t.v)); c.lineTo(w-pr,Y(t.v)); c.stroke(); c.setLineDash([]);
+    c.fillStyle=t.col; c.textAlign="left"; c.fillText(t.label, pl+4, Y(t.v)-4); }
+  for(const s of o.series){ if(!s.pts.length) continue; c.beginPath(); s.pts.forEach(([t,v],i)=>{ const x=X(t), y=Y(v); i?c.lineTo(x,y):c.moveTo(x,y); });
+    c.setLineDash(s.dash||[]); c.strokeStyle="rgba(0,0,0,.6)"; c.lineWidth=(s.w||2.2)+2; c.stroke(); c.strokeStyle=s.col; c.lineWidth=s.w||2.2; c.stroke(); c.setLineDash([]); }
+  if(cv._hx!=null && cv._hx>=pl && cv._hx<=w-pr){ const t=o.t0+(cv._hx-pl)/iw*span; const near=pts=>pts.reduce((a,p)=>!a||Math.abs(p[0]-t)<Math.abs(a[0]-t)?p:a,null);
+    const lines=[]; let tt=null; for(const s of o.series){ const p=near(s.pts); if(!p) continue; tt=tt??p[0]; lines.push([s.col, `${s.name} ${fmtT(p[1])}°F${p[2]?" · "+p[2]:""}`]); c.fillStyle=s.col; c.beginPath(); c.arc(X(p[0]),Y(p[1]),3.5,0,Math.PI*2); c.fill(); }
+    if(lines.length){ c.strokeStyle="#cfdbe066"; c.beginPath(); c.moveTo(X(tt),pt); c.lineTo(X(tt),pt+ih); c.stroke();
+      const head=o.tipTime? o.tipTime(tt) : hhmmZ(tt), all=[["#d8e2e7",head],...lines]; c.font="12px "+font; const tw=Math.max(...all.map(l=>c.measureText(l[1]).width))+16;
+      const bx=Math.min(Math.max(pl+4,X(tt)+10), w-pr-tw-2); c.fillStyle="#0d1316ee"; c.fillRect(bx,pt+4,tw,all.length*15+8); c.textAlign="left";
+      all.forEach(([col,l],i)=>{ c.fillStyle=col; c.fillText(l,bx+8,pt+19+i*15); }); } } }
+function chartHover(cv, fn){ cv.addEventListener("mousemove",e=>{ const r=cv.getBoundingClientRect(); cv._hx=e.clientX-r.left; fn(); }); cv.addEventListener("mouseleave",()=>{ cv._hx=null; fn(); }); }
+const thrLines = () => [["near","Near freezing"],["freeze","Freeze"],["hard","Hard freeze"]].map(([L,n])=>({v:thrOf(L), col:TCOL[L], label:`${n} ${thrOf(L)}°F`}));
+function renderTChart(){ const cv=$("#tChart"); if(!cv) return; const t1=Date.now(), t0=t1-S.tHrs*3600e3;
+  const ser=site=>{ const pts=[]; for(const t of [...tnet.keys()].sort((a,b)=>a-b)){ if(t<t0) continue; let best=null;
+      for(const [k,e] of Object.entries(tnet.get(t))){ const [s,h]=k.split("|"); if(s!==site) continue; if(h!=="?" && +h>S.frzHgt) continue; if(!best||e[0]<best[0]) best=[e[0],`${e[1]} · ${h} ft`]; }
+      if(best) pts.push([t,best[0],best[1]]); } return pts; };
+  const k=ser("KSC"), c=ser("CCSFS");
+  lineChart(cv,{t0,t1,series:[{name:"Kennedy",col:"#6cb6ff",pts:k},{name:"Cape",col:"#e9a23b",pts:c}], thr:thrLines(), empty:S.src.winds? "Collecting readings…" : "Winds feed is off"});
+  const lk=k.at(-1), lc=c.at(-1); $("#ttMeta").textContent = (lk||lc)? `now Kennedy ${fmtT(lk&&lk[1])}°F · Cape ${fmtT(lc&&lc[1])}°F · since ${hhmmZ(Math.min(...[k[0],c[0]].filter(Boolean).map(p=>p[0])))}` : "";
+  $("#ttLegend").innerHTML=`<span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#6cb6ff" stroke-width="2.4"/></svg>Kennedy</span><span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#e9a23b" stroke-width="2.4"/></svg>Cape</span><span>Coldest sensor ≤ ${S.frzHgt} ft each minute</span>`; }
+chartHover($("#tChart"), renderTChart);
+seg($("#segTHrs"), [[6,"6h"],[12,"12h"],[24,"24h"]], S.tHrs, v=>{ S.tHrs=v; save(); renderTChart(); });
+async function tempBackfill(){ if(!SNAP.on || S.demo) return; try{ const f=await snapFeed("temps_min","winds");
+    for(const row of rowsOf(f.rows)){ const t=Date.parse(row.t); if(!Number.isFinite(t)) continue; let p=tnet.get(t); if(!p){ p={}; tnet.set(t,p); }
+      for(const [k,e] of Object.entries(row.s||{})){ if(!p[k] || e[0]<p[k][0]) p[k]=[e[0], e[1]]; } }
+    renderTChart(); }catch(e){} }
+
+/* ===== NWS forecast lows ===== */
+const FC_PTS = { KSC:[28.585,-80.651], CCSFS:[28.470,-80.560] };
+const fc = { KSC:null, CCSFS:null, at:0, err:"", cold:[], timer:0, coldSeen:new Set() };
+async function getExt(url){ if(BR.ok) return brGet(url); if(IN_CLAUDE) throw new Error("Open this dashboard in the Claude desktop app to load this");
+  const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),25000);
+  try{ const r=await fetch(url,{signal:ctl.signal, headers:{Accept:"application/geo+json, application/json"}}); if(!r.ok) throw new Error("HTTP "+r.status); return await r.json(); } finally{ clearTimeout(to); } }
+function gridUrl(site){ try{ const c=JSON.parse(localStorage.getItem("45ws_grid")||"{}"); return c[site]; }catch(e){ return null; } }
+function setGridUrl(site,u){ try{ const c=JSON.parse(localStorage.getItem("45ws_grid")||"{}"); c[site]=u; localStorage.setItem("45ws_grid",JSON.stringify(c)); }catch(e){} }
+async function hourly(site){ let u=gridUrl(site);
+  if(!u){ const [la,lo]=FC_PTS[site]; const p=await getExt(`https://api.weather.gov/points/${la},${lo}`); u=p && p.properties && p.properties.forecastHourly; if(!u) throw new Error("NWS didn't return a forecast for this point"); setGridUrl(site,u); }
+  const j=await getExt(u); const per=(j.properties&&j.properties.periods)||[];
+  return per.map(p=>({t:Date.parse(p.startTime), v:p.temperatureUnit==="C"? p.temperature*9/5+32 : p.temperature, wx:p.shortForecast||"", wind:p.windSpeed||""})).filter(p=>Number.isFinite(p.t)&&Number.isFinite(p.v)); }
+const COLD_EV=/freeze|frost|cold|wind chill|hard freeze/i;
+async function pollFcst(){ clearTimeout(fc.timer);
+  try{ const [k,c]=await Promise.all([hourly("KSC"),hourly("CCSFS")]); fc.KSC=k; fc.CCSFS=c; fc.at=Date.now(); fc.err=""; }
+  catch(e){ fc.err=e.message||String(e); if(/404/.test(fc.err)) try{ localStorage.removeItem("45ws_grid"); }catch(_){} }
+  try{ const lists=await Promise.all(Object.values(FC_PTS).map(([la,lo])=>getExt(`https://api.weather.gov/alerts/active?point=${la},${lo}`)));
+    const m=new Map(); for(const j of lists) for(const f of (j.features||[])){ const p=f.properties||{}; if(COLD_EV.test(p.event||"")) m.set(p.id||f.id,{id:p.id||f.id, event:p.event, headline:p.headline||"", ends:Date.parse(p.ends||p.expires||""), area:p.areaDesc||""}); }
+    fc.cold=[...m.values()];
+    for(const w of fc.cold){ if(fc.coldSeen.has(w.id)) continue; fc.coldSeen.add(w.id); logEvent("nws", w.event, w.area.slice(0,90), w.headline);
+      if(S.aFrz) raise({key:"coldnws:"+w.id, kind:"coldnws", group:"temp", level:/warning/i.test(w.event)?"strong":"warn", title:`NWS ${w.event}`, detail:w.headline||w.area}); } }
+  catch(e){}
+  renderFcst(); fc.timer=setTimeout(pollFcst, fc.err? 10*60000 : 30*60000); }
+function nights(){ const all=[...(fc.KSC||[]).map(p=>({...p,site:"KSC"})), ...(fc.CCSFS||[]).map(p=>({...p,site:"CCSFS"}))]; const by=new Map();
+  for(const p of all){ const d=new Date(p.t), hr=d.getHours(); if(hr>=9 && hr<18) continue; const n=new Date(d); if(hr<9) n.setDate(n.getDate()-1); n.setHours(18,0,0,0);
+    const k=+n; const e=by.get(k)||{t:k, KSC:null, CCSFS:null, at:null}; const cur=e[p.site]; if(cur==null||p.v<cur){ e[p.site]=p.v; }
+    if(e.at==null || p.v<e.at.v) e.at=p; by.set(k,e); }
+  return [...by.values()].sort((a,b)=>a.t-b.t).filter(n=>n.t+15*3600e3>Date.now()).slice(0,7); }
+function renderFcst(){ const ns=nights(), dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  $("#fcMeta").textContent = fc.err && !fc.at? `Couldn't reach the NWS: ${fc.err}` : fc.at? `NWS Melbourne hourly forecast · updated ${hhmmZ(fc.at)}${fc.err?" · last refresh failed":""}` : "Loading NWS forecast…";
+  $("#fcTable tbody").innerHTML = ns.length? ns.map(n=>{ const d=new Date(n.t), lo=Math.min(...[n.KSC,n.CCSFS].filter(v=>v!=null)), L=tInst(lo), at=n.at? new Date(n.at.t) : null;
+      return `<tr><td>${dn[d.getDay()]} night ${d.getMonth()+1}/${d.getDate()}</td><td class="tc-${tInst(n.KSC)}">${n.KSC==null?"—":Math.round(n.KSC)+"°"}</td><td class="tc-${tInst(n.CCSFS)}">${n.CCSFS==null?"—":Math.round(n.CCSFS)+"°"}</td>
+        <td>${at? `${pad(at.getHours())}00 L · ${esc(n.at.wx)}` : "—"}</td><td>${L==="ok"? '<span style="color:var(--muted)">—</span>' : `<span class="lvl" style="background:${TCOL[L]};color:${L==="hard"?"#fff":"#1a1004"}">${TL[L].tag}</span>`}</td></tr>`; }).join("")
+    : `<tr><td colspan="5" class="empty">${fc.err? "No forecast loaded." : "Loading…"}</td></tr>`;
+  $("#coldNws").innerHTML = fc.cold.map(w=>`<div class="cw"><b>NWS ${esc(w.event)}</b>${Number.isFinite(w.ends)?` · until ${hhmmZ(w.ends)}`:""}<br><span>${esc(w.headline||w.area)}</span></div>`).join("");
+  $("#fcLegend").innerHTML=`<span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#6cb6ff" stroke-width="2.4"/></svg>Kennedy</span><span><svg width="22" height="8" aria-hidden="true"><line x1="1" y1="4" x2="21" y2="4" stroke="#e9a23b" stroke-width="2.4" stroke-dasharray="6,4"/></svg>Cape</span><span>Shaded: night (6 pm–9 am local) · nights are flagged with the same thresholds as the towers</span>`;
+  renderFcChart(); renderTabBadges(); }
+function renderFcChart(){ const cv=$("#fcChart"); if(!cv) return; const t0=Date.now()-3600e3, t1=t0+73*3600e3, cut=p=>p.t>=t0&&p.t<=t1;
+  const shade=nights().map(n=>[n.t, n.t+15*3600e3]); const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  lineChart(cv,{t0,t1,shade,thr:thrLines(),empty:fc.err? "No NWS forecast loaded" : "Loading NWS forecast…",
+    tipTime:t=>{ const d=new Date(t); return `${dn[d.getDay()]} ${pad(d.getHours())}00 L · ${pad(d.getUTCHours())}00Z`; },
+    series:[{name:"Kennedy",col:"#6cb6ff",pts:(fc.KSC||[]).filter(cut).map(p=>[p.t,p.v,p.wx])},{name:"Cape",col:"#e9a23b",dash:[6,4],pts:(fc.CCSFS||[]).filter(cut).map(p=>[p.t,p.v,p.wx])}]}); }
+chartHover($("#fcChart"), renderFcChart);
+
+/* ===== Admin: METARs, TAFs, forecast discussion ===== */
+const STN_NM = { KXMR:"Cape Canaveral SFS Skid Strip", KTTS:"NASA Launch & Landing Facility", KCOF:"Patrick SFB", KMLB:"Melbourne Intl", KTIX:"Titusville", KXMR_:"" };
+const avwx = { metar:[], taf:[], at:0, err:"", src:"", timer:0 };
+const stnList = () => String(S.stations||DEFAULTS.stations).split(",").map(x=>x.trim().toUpperCase()).filter(Boolean);
+async function avwxGet(kind){ const ids=stnList().join(",");
+  const url=`https://aviationweather.gov/api/data/${kind}?ids=${ids}&format=json${kind==="metar"?"&hours=3":""}`;
+  try{ const j=await getExt(url); avwx.src="aviationweather.gov"; return Array.isArray(j)? j : []; }
+  catch(e){ if(SNAP.on){ const f=await snapFeed(kind); avwx.src="GitHub Actions collector"; return rowsOf(f.rows); } throw e; } }
+async function pollAvwx(){ clearTimeout(avwx.timer);
+  try{ const [m,t]=await Promise.all([avwxGet("metar"), avwxGet("taf")]); avwx.metar=m; avwx.taf=t; avwx.at=Date.now(); avwx.err=""; }
+  catch(e){ avwx.err=e.message||String(e); }
+  renderAvwx(); avwx.timer=setTimeout(pollAvwx, 5*60000); }
+$("#btnMtRefresh").onclick=()=>{ $("#mtMeta").textContent="Refreshing…"; pollAvwx(); };
+const obsT = m => (m.obsTime? m.obsTime*1000 : Date.parse(m.reportTime||m.receiptTime||""));
+function ceilingOf(m){ const c=(m.clouds||[]).filter(x=>/BKN|OVC|OVX|VV/.test(x.cover||"")).map(x=>x.base).filter(v=>v!=null); return c.length? Math.min(...c) : null; }
+function fltCat(m){ if(m.fltCat) return m.fltCat; const v=parseFloat(String(m.visib).replace("+","")), c=ceilingOf(m);
+  if((c!=null&&c<500)||v<1) return "LIFR"; if((c!=null&&c<1000)||v<3) return "IFR"; if((c!=null&&c<=3000)||v<=5) return "MVFR"; return Number.isFinite(v)||c!=null? "VFR" : ""; }
+const cToF = c => c==null? null : c*9/5+32;
+function renderAvwx(){ const ids=stnList();
+  $("#mtMeta").textContent = avwx.err && !avwx.at? `Couldn't load METARs: ${avwx.err}` : avwx.at? `${avwx.src} · updated ${hhmmZ(avwx.at)}${avwx.err?" · last refresh failed":""}` : "Loading…";
+  $("#tfMeta").textContent = avwx.at? `${avwx.src} · updated ${hhmmZ(avwx.at)}` : avwx.err? "Couldn't load TAFs" : "Loading…";
+  $("#mtBody").innerHTML = ids.map(id=>{ const obs=avwx.metar.filter(m=>(m.icaoId||m.stationId)===id).sort((a,b)=>obsT(b)-obsT(a)), m=obs[0];
+    if(!m) return `<div class="stn"><div class="sh"><span class="sid">${id}</span><span class="snm">${esc(STN_NM[id]||"")}</span></div><div class="empty">${avwx.at? "No observation in the last 3 hours." : "—"}</div></div>`;
+    const fcat=fltCat(m), wind=m.wdir==null&&m.wspd==null? "—" : (m.wspd===0? "Calm" : `${m.wdir==="VRB"?"VRB":String(m.wdir).padStart(3,"0")}° ${m.wspd} kt${m.wgst?" G"+m.wgst:""}`), c=ceilingOf(m), age=Date.now()-obsT(m);
+    return `<div class="stn"><div class="sh"><span class="sid">${id}</span>${fcat?`<span class="fcat ${fcat}">${fcat}</span>`:""}<span class="snm">${esc(m.name||STN_NM[id]||"")}</span><span class="sage">${Number.isFinite(age)? hhmmZ(obsT(m))+" · "+ago(age)+" ago" : ""}</span></div>
+      <div class="dec"><span>Wind <b>${wind}</b></span><span>Vis <b>${m.visib??"—"} SM</b></span><span>Ceiling <b>${c==null?"none":c+" ft"}</b></span>${m.wxString?`<span>Wx <b>${esc(m.wxString)}</b></span>`:""}<span>Temp <b>${m.temp==null?"—":fmtT(cToF(m.temp),0)+"°F / "+fmtT(cToF(m.dewp),0)+"°F"}</b></span><span>Altim <b>${m.altim==null?"—":(m.altim>200? (m.altim*0.02953).toFixed(2) : (+m.altim).toFixed(2))}</b></span></div>
+      <pre class="raw">${esc(m.rawOb||"")}</pre>${obs.length>1?`<details><summary>Earlier (${obs.length-1})</summary><pre class="raw">${obs.slice(1).map(o=>esc(o.rawOb||"")).join("\n")}</pre></details>`:""}</div>`; }).join("");
+  $("#tfBody").innerHTML = ids.map(id=>{ const t=avwx.taf.filter(x=>(x.icaoId||x.stationId)===id).sort((a,b)=>Date.parse(b.issueTime||0)-Date.parse(a.issueTime||0))[0];
+    if(!t) return `<div class="stn"><div class="sh"><span class="sid">${id}</span><span class="snm">${esc(STN_NM[id]||"")}</span></div><div class="empty">${avwx.at? "No current TAF." : "—"}</div></div>`;
+    const raw=String(t.rawTAF||"").replace(/\s+/g," ").trim(), grp=raw.split(/(?=\s(?:FM\d{6}|TEMPO|BECMG|PROB\d{2}))/).map(g=>`<span class="grp">${esc(g.trim())}</span>`).join("");
+    const iss=Date.parse(t.issueTime||"");
+    return `<div class="stn"><div class="sh"><span class="sid">${id}</span><span class="snm">${esc(t.name||STN_NM[id]||"")}</span><span class="sage">${Number.isFinite(iss)? "issued "+hhmmZ(iss)+" · "+ago(Date.now()-iss)+" ago" : ""}</span></div><pre class="raw">${grp}</pre></div>`; }).join("");
+  renderTabBadges(); }
+const afd = { id:"", text:"", at:0, issued:0, err:"", seen:"", timer:0 };
+try{ afd.seen=localStorage.getItem("45ws_afd_seen")||""; }catch(e){}
+async function pollAfd(){ clearTimeout(afd.timer); const off=(S.afdOffice||"MLB").toUpperCase();
+  try{ const l=await getExt(`https://api.weather.gov/products/types/AFD/locations/${off}`); const g=(l["@graph"]||[])[0]; if(!g) throw new Error("No discussion found for "+off);
+    if(g.id!==afd.id){ const p=await getExt(`https://api.weather.gov/products/${g.id}`); afd.text=p.productText||""; afd.id=g.id; afd.issued=Date.parse(p.issuanceTime||g.issuanceTime||""); }
+    afd.at=Date.now(); afd.err=""; }
+  catch(e){ afd.err=e.message||String(e); }
+  renderAfd(); afd.timer=setTimeout(pollAfd, 15*60000); }
+function renderAfd(){ const off=(S.afdOffice||"MLB").toUpperCase();
+  $("#afdTitle").textContent = `Area forecast discussion · NWS ${off==="MLB"?"Melbourne":off}`;
+  $("#afdLink").href=`https://forecast.weather.gov/product.php?site=${off}&issuedby=${off}&product=AFD`;
+  $("#afdMeta").textContent = afd.err && !afd.text? `Couldn't load: ${afd.err}` : afd.issued? `issued ${hhmmZ(afd.issued)} · ${ago(Date.now()-afd.issued)} ago` : "Loading…";
+  if(!afd.text){ $("#afdBody").innerHTML=`<div class="empty">${afd.err? esc(afd.err) : "Loading…"}</div>`; $("#afdJump").innerHTML=""; renderTabBadges(); return; }
+  const secs=[]; const html=esc(afd.text).split("\n").map(line=>{ const m=line.match(/^\.([A-Z][A-Z /&-]{2,40}?)\.{3}/); if(m){ const id="afd-"+secs.length; secs.push([id, m[1].trim()]); return `<span class="sec" id="${id}">${line}</span>`; } return line; }).join("\n");
+  $("#afdBody").innerHTML=`<pre>${html}</pre>`;
+  $("#afdJump").innerHTML = secs.map(([id,n])=>`<button type="button" class="btn sm" data-j="${id}">${esc(n.replace(/\s*\/.*$/,"").slice(0,22))}</button>`).join("");
+  $("#afdJump").querySelectorAll("[data-j]").forEach(b=>b.onclick=()=>{ const t=document.getElementById(b.dataset.j), box=$("#afdBody"); if(t) box.scrollTop=t.offsetTop-box.offsetTop-6; });
+  if(curTab==="afd") markAfdSeen(); renderTabBadges(); }
+function markAfdSeen(){ if(afd.id && afd.seen!==afd.id){ afd.seen=afd.id; try{ localStorage.setItem("45ws_afd_seen",afd.id); }catch(e){} } }
+
+/* ===== Tabs ===== */
+let curTab = (()=>{ try{ const t=localStorage.getItem("45ws_tab"); return ["lw","temp","admin","afd"].includes(t)? t : "lw"; }catch(e){ return "lw"; } })();
+function setTab(t){ if(!["lw","temp","admin","afd"].includes(t)) t="lw"; curTab=t;
+  for(const b of document.querySelectorAll(".tab")){ const on=b.dataset.tab===t; b.setAttribute("aria-selected",String(on)); b.tabIndex=on?0:-1; }
+  for(const [k,box] of Object.entries(TABBOX)) box.classList.toggle("on", k===t);
+  try{ localStorage.setItem("45ws_tab",t); }catch(e){}
+  if(t==="afd") markAfdSeen();
+  relayoutSoon(); renderTabBadges(); }
+function renderTabBadges(){ if(!T_READY) return; const lw=$("#tbLW"), tt=$("#tbT"), ad=$("#tbA"); if(!lw) return;
+  const al=alerts.filter(a=>a.group!=="temp"), hot=al.some(SEVERE); lw.textContent=al.length? String(al.length) : ""; lw.className="tb"+(al.length? (hot?" crit":" warn") : "");
+  const sum=siteSummary(tRows()), xs=["KSC","CCSFS"].map(s=>sum[s]).filter(Boolean);
+  if(xs.length){ const cold=Math.min(...xs.map(x=>x.cold.tmp)), L=xs.reduce((a,x)=>TRANK[x.lvl]>TRANK[a]?x.lvl:a,"ok"); tt.textContent=fmtT(cold,0)+"°F"; tt.className="tb"+(L==="ok"?"":" "+TL[L].al); }
+  else { tt.textContent=""; tt.className="tb"; }
+  const fcFlag=nights().some(n=>[n.KSC,n.CCSFS].some(v=>v!=null && v<=S.frzNear)); if(fcFlag && !xs.some(x=>x.lvl!=="ok")){ tt.textContent=(tt.textContent? tt.textContent+" · ":"")+"fcst cold"; tt.className="tb info"; }
+  const newAfd = afd.id && afd.seen!==afd.id && curTab!=="afd", dd=$("#tbD"); dd.textContent=newAfd? "new" : ""; dd.className="tb"+(newAfd?" info":"");
+  const bad=stnList().filter(id=>{ const m=avwx.metar.filter(x=>(x.icaoId||x.stationId)===id).sort((a,b)=>obsT(b)-obsT(a))[0]; return m && /IFR/.test(fltCat(m)); });
+  ad.textContent = bad.length? `${bad.length} IFR` : ""; ad.title = bad.length? "IFR or LIFR now: "+bad.join(", ") : ""; ad.className="tb"+(bad.length?" crit":""); }
+function resetTemp(){ if(!T_READY) return; tnet.clear(); for(const k in tObs) delete tObs[k]; for(const k in tAlertLvl) delete tAlertLvl[k]; tLatest=[];
+  fc.coldSeen.clear(); setTimeout(()=>{ pollFcst(); tempBackfill(); renderTemp(); renderTChart(); },500); }
+T_READY = true;
+function initTabs(){ const tabs=[...document.querySelectorAll(".tab")];
+  tabs.forEach((b,i)=>{ b.onclick=()=>setTab(b.dataset.tab);
+    b.onkeydown=e=>{ const d=e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:0; if(!d) return; e.preventDefault(); const n=tabs[(i+d+tabs.length)%tabs.length]; n.focus(); setTab(n.dataset.tab); }; });
+  setTab(curTab);
+  renderTemp(); renderFcst(); renderAvwx(); renderAfd();
+  setTimeout(()=>{ pollFcst(); pollAvwx(); pollAfd(); tempBackfill(); }, 1500);
+  setInterval(()=>{ renderTChart(); if(curTab==="admin") renderAvwx(); }, 60000); }
+
 /* ===== Customizable card layout (per viewer, saved in this browser) ===== */
 const LAYOUT_KEY="45ws_layout_v1";
-const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log"};
-const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:6, logCard:12, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6}, h:{}, hide:[]};
+const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log",
+  tempCard:"Tower temperatures", fcCard:"NWS forecast lows", tTrendCard:"Temperature trend", metarCard:"METARs", tafCard:"TAFs", afdCard:"Forecast discussion"};
+const CARD_TAB={tempCard:"temp", fcCard:"temp", tTrendCard:"temp", metarCard:"admin", tafCard:"admin", afdCard:"afd"};
+const TABBOX={lw:$("#dash"), temp:$("#dashT"), admin:$("#dashA"), afd:$("#dashD")};
+const boxOf = id => TABBOX[CARD_TAB[id]||"lw"];
+const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:6, logCard:12, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6, tempCard:7, fcCard:5, metarCard:6, tafCard:6}, h:{}, hide:[]};
 let LAY=(()=>{ try{ const o=JSON.parse(localStorage.getItem(LAYOUT_KEY)||"null"); if(o && Array.isArray(o.order)) return {order:o.order, span:o.span||{}, h:o.h||{}, hide:o.hide||[]}; }catch(e){} return structuredClone(LAYOUT_DEF); })();
 function layoutSave(){ try{ localStorage.setItem(LAYOUT_KEY, JSON.stringify(LAY)); }catch(e){} }
 const dashEl=$("#dash"), cardEl=id=>document.getElementById(id);
@@ -1880,13 +2247,13 @@ function applyCard(id){ const el=cardEl(id); if(!el) return; const sp=LAY.span[i
   el.classList.toggle("uhide", LAY.hide.includes(id));
   const cs=el.querySelector(".ccbar .cs"); if(cs) cs.textContent=`${sp}/12 wide · ${h? h+" px" : "auto height"}`; }
 function applyLayout(){ const ids=[...LAY.order.filter(id=>CARDS[id]), ...Object.keys(CARDS).filter(id=>!LAY.order.includes(id))];
-  for(const id of ids){ const el=cardEl(id); if(el) dashEl.appendChild(el); }
+  for(const id of ids){ const el=cardEl(id); if(el) boxOf(id).appendChild(el); }
   const ww=cardEl("wallWinds"); if(ww) dashEl.appendChild(ww);
   ids.forEach(applyCard); renderHiddenList(); relayoutSoon(); }
 function renderHiddenList(){ const box=$("#lyHidden"); box.innerHTML = LAY.hide.filter(id=>CARDS[id]).map(id=>`<button type="button" class="btn sm" data-show="${id}">Show ${CARDS[id]}</button>`).join("");
   box.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ LAY.hide=LAY.hide.filter(x=>x!==b.dataset.show); layoutSave(); applyCard(b.dataset.show); renderHiddenList(); relayoutSoon(); }); }
-let rlT; function relayoutSoon(){ clearTimeout(rlT); rlT=setTimeout(()=>{ try{ renderAllMaps(); renderChart(); renderNet(); }catch(e){} },120); }
-if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#tmap","#chart","#netChart"].forEach(q=>{ const el=$(q); if(el) ro.observe(el); }); }
+let rlT; function relayoutSoon(){ clearTimeout(rlT); rlT=setTimeout(()=>{ try{ renderAllMaps(); renderChart(); renderNet(); }catch(e){} try{ renderTChart(); renderFcChart(); }catch(e){} },120); }
+if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#tmap","#chart","#netChart","#tChart","#fcChart"].forEach(q=>{ const el=$(q); if(el) ro.observe(el); }); }
 // edit overlay on every card
 for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
   const cv=document.createElement("div"); cv.className="ccover"; cv.dataset.card=id;
@@ -1904,22 +2271,22 @@ for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
   const hz=cv.querySelector(".rsz");
   hz.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation();
     const narrow=matchMedia("(max-width:900px)").matches;
-    const mv=ev=>{ const r=el.getBoundingClientRect(), gap=parseFloat(getComputedStyle(dashEl).columnGap)||16, colW=(dashEl.clientWidth-11*gap)/12;
+    const mv=ev=>{ const box=el.parentElement, r=el.getBoundingClientRect(), gap=parseFloat(getComputedStyle(box).columnGap)||16, colW=(box.clientWidth-11*gap)/12;
       if(!narrow) LAY.span[id]=Math.max(3,Math.min(12,Math.round((ev.clientX-r.left+gap)/(colW+gap))));
       LAY.h[id]=Math.max(minH(id), Math.round((ev.clientY-r.top)/10)*10); applyCard(id); };
     const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up); layoutSave(); relayoutSoon(); };
     addEventListener("pointermove",mv); addEventListener("pointerup",up); addEventListener("pointercancel",up); }); }
-const visCards=()=>[...dashEl.children].filter(n=>CARDS[n.id] && n.offsetParent!==null);
-function saveOrder(el){ LAY.order=[...dashEl.children].map(n=>n.id).filter(id=>CARDS[id]); layoutSave(); relayoutSoon();
+const visCards=box=>[...box.children].filter(n=>CARDS[n.id] && n.offsetParent!==null);
+function saveOrder(el){ LAY.order=Object.values(TABBOX).flatMap(b=>[...b.children].map(n=>n.id)).filter(id=>CARDS[id]); layoutSave(); relayoutSoon();
   if(el){ el.classList.remove("justmoved"); void el.offsetWidth; el.classList.add("justmoved"); } }
-function moveBy(el,dir){ const v=visCards(), i=v.indexOf(el), o=v[i+dir]; if(!o) return;
-  dashEl.insertBefore(el, dir<0? o : o.nextElementSibling); saveOrder(el); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }
-function startCardDrag(el,e){ const x0=e.clientX, y0=e.clientY; let px=x0, py=y0, active=false, drop=null, raf=0;
+function moveBy(el,dir){ const box=el.parentElement, v=visCards(box), i=v.indexOf(el), o=v[i+dir]; if(!o) return;
+  box.insertBefore(el, dir<0? o : o.nextElementSibling); saveOrder(el); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function startCardDrag(el,e){ const dashEl=el.parentElement, x0=e.clientX, y0=e.clientY; let px=x0, py=y0, active=false, drop=null, raf=0;
   const ghost=document.createElement("div"), line=document.createElement("div");
   ghost.className="dghost"; ghost.textContent="Move · "+CARDS[el.id]; line.className="dropline";
   const gap=()=>parseFloat(getComputedStyle(dashEl).columnGap)||16;
   function findDrop(){ let best=null, bd=Infinity;
-    for(const c of visCards()){ if(c===el) continue; const r=c.getBoundingClientRect();
+    for(const c of visCards(dashEl)){ if(c===el) continue; const r=c.getBoundingClientRect();
       const dx=Math.max(r.left-px,0,px-r.right), dy=Math.max(r.top-py,0,py-r.bottom), d=Math.hypot(dx,dy); if(d<bd){ bd=d; best={c,r}; } }
     if(!best || bd>220) return null;
     const {c,r}=best, wide=r.width > dashEl.clientWidth*0.85;
@@ -1949,7 +2316,7 @@ $("#lyDone").onclick=()=>setLayoutEdit(false);
 function layoutDefault(){ LAY=structuredClone(LAYOUT_DEF); layoutSave(); for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(el){ el.style.removeProperty("--ch"); } } applyLayout(); window.scrollTo({top:0,behavior:"smooth"}); }
 $("#lyReset").onclick=layoutDefault; $("#lyReset2").onclick=layoutDefault; $("#lyDone2").onclick=()=>setLayoutEdit(false);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("layout-edit")) setLayoutEdit(false); });
-applyLayout();
+applyLayout(); initTabs();
 </script>
 </body>
 </html>

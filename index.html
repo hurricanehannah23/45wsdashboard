@@ -206,12 +206,10 @@ body:not(.wall) .dash > section.sized > .tablewrap, body:not(.wall) .dash > sect
 body:not(.wall) .dash > section.sized.mappanel .mapbox{flex:1 1 auto;min-height:0}
 body:not(.wall) .dash > section.sized.mappanel .mapcv{height:100%!important;min-height:200px}
 body:not(.wall) #netCard.sized > .pb{flex:1 1 auto;min-height:0} body:not(.wall) #netCard.sized #netChart{height:100%;min-height:140px}
-#logCard:not(.sized) > .tablewrap{flex:1 1 0;min-height:340px;max-height:none!important}
+#logCard:not(.sized) > .tablewrap{flex:1 1 auto;max-height:420px!important}
 #ringsCard:not(.sized) > .rings{flex:1 1 0;min-height:300px;overflow:auto;align-content:start}
-/* ring status and strike log fill whatever height the row already has instead of making it taller */
-body:not(.wall) #ringsCard:not(.sized), body:not(.wall) #logCard:not(.sized){contain:size;min-height:440px}
-#logCard:not(.sized) > .tablewrap{min-height:0}
-@media (max-width:1200px) and (min-width:901px){ #ringsCard:not([style*="span 12"]), #logCard:not([style*="span 12"]){grid-column:span 6!important} }
+/* ring status fills whatever height the row already has instead of making it taller */
+body:not(.wall) #ringsCard:not(.sized){contain:size;min-height:440px}
 @media (max-width:900px){ .dash > section{grid-column:1/-1!important} }
 .ccover{display:none}
 body.layout-edit:not(.wall) .ccover{display:block;position:absolute;inset:0;z-index:30;border:2px dashed var(--accent);border-radius:inherit;background:#0b111480;cursor:grab;touch-action:none}
@@ -425,7 +423,7 @@ body.wall .stile .sv{font-size:24px}
     <button type="button" class="ibtn" id="btnBell" aria-label="Show alerts" aria-expanded="false" title="Alerts"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.6L4.3 16h15.4L18 12.6V9a6 6 0 0 0-6-6Zm-2.2 15a2.2 2.2 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="badge" id="bellBadge" hidden>0</span></button>
     <a class="btn sm qlink" id="lnkAviation" href="https://nluchetti1.github.io/aviation_table_cape_canaveral/" target="_blank" rel="noopener noreferrer" title="Open the Cape Canaveral aviation table in a new tab">Aviation table <span aria-hidden="true">↗</span></a>
     <a class="btn sm qlink" id="lnkPlanning" href="https://cyclonecizek.github.io/ERPlanningForecast/" target="_blank" rel="noopener noreferrer" title="Open the planning forecast in a new tab">Planning forecast <span aria-hidden="true">↗</span></a>
-    <a class="btn sm qlink" id="lnkRotator" href="https://video.ibm.com/channel/HHMIzseVWZU" target="_blank" rel="noopener noreferrer" title="Open the Rotator video channel in a new tab">Rotator <span aria-hidden="true">↗</span></a>
+    <a class="btn sm qlink" id="lnkRotator" href="https://video.ibm.com/channel/HHMlzseVWZU" target="_blank" rel="noopener noreferrer" title="Open the Rotator video channel in a new tab">Rotator <span aria-hidden="true">↗</span></a>
     <button type="button" class="ibtn" id="btnLayout" aria-label="Customize layout" aria-pressed="false" title="Customize layout: move and resize cards (saved in this browser)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 4h7v9H4zM13 4h7v5h-7zM13 11h7v9h-7zM4 15h7v5H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
     <button type="button" class="ibtn" id="btnWall" aria-label="Wall mode" aria-pressed="false" title="Wall mode: full-screen layout for an ops-floor display"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <button type="button" class="ibtn" id="btnSettings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M10.3 3h3.4l.5 2.4 1.7.9 2.3-.9 1.7 2.9-1.8 1.6v2.2l1.8 1.6-1.7 2.9-2.3-.9-1.7.9-.5 2.4h-3.4l-.5-2.4-1.7-.9-2.3.9-1.7-2.9 1.8-1.6v-2.2L3.9 8.3l1.7-2.9 2.3.9 1.7-.9Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
@@ -1872,7 +1870,7 @@ else { snapInit().then(()=>{ restart(); renderSnapNote(); }); pollNWS(); fetchTe
 /* ===== Customizable card layout (per viewer, saved in this browser) ===== */
 const LAYOUT_KEY="45ws_layout_v1";
 const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log"};
-const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:3, logCard:3, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6}, h:{}, hide:[]};
+const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:6, logCard:12, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6}, h:{}, hide:[]};
 let LAY=(()=>{ try{ const o=JSON.parse(localStorage.getItem(LAYOUT_KEY)||"null"); if(o && Array.isArray(o.order)) return {order:o.order, span:o.span||{}, h:o.h||{}, hide:o.hide||[]}; }catch(e){} return structuredClone(LAYOUT_DEF); })();
 function layoutSave(){ try{ localStorage.setItem(LAYOUT_KEY, JSON.stringify(LAY)); }catch(e){} }
 const dashEl=$("#dash"), cardEl=id=>document.getElementById(id);

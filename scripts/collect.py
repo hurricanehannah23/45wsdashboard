@@ -21,6 +21,9 @@ API = {
     "winds": "https://codiapi-winds1.rad.spaceforce.mil",
     "efm":   "https://codiapi-lplws1.rad.spaceforce.mil",
     "avwx":  "https://aviationweather.gov",
+    "nhc":   "https://www.nhc.noaa.gov",
+    "iem":   "https://mesonet.agron.iastate.edu",
+    "ll":    "https://ll.thespacedevs.com",
 }
 STATIONS = os.environ.get("WX_STATIONS", "KXMR,KTTS,KCOF,KMLB")
 API.update(json.loads(os.environ.get("WX_API_OVERRIDE", "{}")))   # for testing only
@@ -211,6 +214,34 @@ def previous_hist():
         return {}
 
 
+def nhc_storms(now):
+    d = get(API["nhc"], "/CurrentStorms.json")
+    return {"rows": [s for s in (d or {}).get("activeStorms", []) if str(s.get("id", "")).lower().startswith("al")]}
+
+
+def raob(now):
+    """Latest Cape Canaveral (XMR) sounding from the Iowa Environmental Mesonet."""
+    t = now.replace(minute=0, second=0, microsecond=0, hour=12 if now.hour >= 12 else 0)
+    for _ in range(4):
+        d = get(API["iem"], "/json/raob.py", f"station=KXMR&ts={t.strftime('%Y%m%d%H%M')}")
+        p = (d or {}).get("profiles", [])
+        if p and len(p[0].get("profile", [])) > 5:
+            return {"rows": p[:1]}
+        t -= timedelta(hours=12)
+    raise RuntimeError("No recent XMR sounding")
+
+
+LAUNCH_EVERY_MIN = 30   # the free Launch Library allows about 15 requests an hour
+
+
+def launches(now, prev):
+    last = prev.get("fetched_at")
+    if last and prev.get("status") == "ok" and now - datetime.fromisoformat(last) < timedelta(minutes=LAUNCH_EVERY_MIN):
+        return {"rows": prev.get("rows", []), "kept": True}
+    d = get(API["ll"], "/2.2.0/launch/upcoming/", "location__ids=12,27&limit=12")
+    return {"rows": (d or {}).get("results", [])}
+
+
 def efm(now):
     rows = as_list(get(API["efm"], "/lplws_1min/latest"))
     if not rows:
@@ -219,7 +250,8 @@ def efm(now):
 
 
 FEEDS = {"c2g": lambda n: lightning("c2g", n), "c2c": lambda n: lightning("c2c", n),
-         "winds": winds, "winds_hist": winds_hist, "efm": efm, "metar": metar, "taf": taf}
+         "winds": winds, "winds_hist": winds_hist, "efm": efm, "metar": metar, "taf": taf, "nhc_storms": nhc_storms, "raob": raob}
+OPTIONAL = ("metar", "taf", "nhc_storms", "raob", "launches")
 
 
 def previous():
@@ -253,6 +285,14 @@ def main(out):
     except Exception as e:
         result["feeds"]["winds_max"] = {**old.get("winds_max", {"rows": []}), "status": "error", "error": str(e)[:300]}
     try:
+        lp = old.get("launches", {})
+        r = launches(now, lp)
+        kept = r.pop("kept", False)
+        result["feeds"]["launches"] = {**r, "status": "ok", "fetched_at": lp.get("fetched_at") if kept else now.isoformat(), "error": None}
+    except Exception as e:
+        prev = old.get("launches", {})
+        result["feeds"]["launches"] = {**prev, "rows": prev.get("rows", []), "status": "error", "error": str(e)[:300], "failed_at": now.isoformat()}
+    try:
         hist = result["feeds"]["winds_hist"]["rows"] if result["feeds"]["winds_hist"]["status"] == "ok" else []
         result["feeds"]["temps_min"] = {**temps_min(now, hist, old.get("temps_min", {})), "status": "ok" if hist else "error",
                                         "fetched_at": now.isoformat(), "error": None if hist else "No recent tower readings"}
@@ -274,7 +314,7 @@ def main(out):
         json.dump(result, f, separators=(",", ":"), allow_nan=False)
     os.replace(path + ".tmp", path)
     print(json.dumps({k: {"status": v["status"], "rows": len(v["rows"])} for k, v in result["feeds"].items()}))
-    if all(v["status"] == "error" for k, v in result["feeds"].items() if k not in ("metar", "taf")):
+    if all(v["status"] == "error" for k, v in result["feeds"].items() if k not in OPTIONAL):
         sys.exit("Every feed failed")
 
 

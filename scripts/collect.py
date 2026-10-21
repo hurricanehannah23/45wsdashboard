@@ -145,6 +145,72 @@ def taf(now):
     return {"rows": as_list(get(API["avwx"], "/api/data/taf", f"ids={STATIONS}&format=json"))}
 
 
+HIST_HOURS = 24
+
+
+def _minute(t):
+    return int(datetime.strptime(t[:16], "%Y-%m-%dT%H:%M").replace(tzinfo=UTC).timestamp() // 60)
+
+
+def _wv(v):
+    return None if v is None or v >= 999 else round(v, 1)
+
+
+def winds_24h(now, recent_rows, prev):
+    """Per-sensor 1-min winds for the last 24 hours, written to data/winds_hist.json for the tower trend.
+    Each run adds the last hour; missing hours (first run, or after a gap) are filled from /winds/range."""
+    t0p = prev.get("t0", 0)
+    hist = {k: {t0p + r[0]: r[1:] for r in rows} for k, rows in prev.get("s", {}).items()}
+    now_m = int(now.timestamp() // 60)
+    start_m = now_m - HIST_HOURS * 60
+
+    def add(rows):
+        for r in rows:
+            t, h = r.get("reading_datetime"), r.get("hgt")
+            if not t or not r.get("tower"):
+                continue
+            a, p, p10, d = _wv(r.get("avg_spd_1min")), _wv(r.get("peak_spd_1min")), _wv(r.get("peak_spd_10min")), _wv(r.get("avg_dir_1min"))
+            if a is None and p is None:
+                continue
+            k = str(r["tower"]).strip() + ("@%d" % round(h) if h is not None else "")
+            hist.setdefault(k, {})[_minute(t)] = [a, p, p10, d]
+
+    add(recent_rows)
+    # fill hours we don't have yet, newest first, at most 24 requests per run
+    have = set()
+    for m in hist.values():
+        have.update(x // 60 for x in m)
+    end = now - timedelta(minutes=WIND_HIST_MIN)
+    for _ in range(HIST_HOURS):
+        a = end - timedelta(hours=1)
+        if int(a.timestamp() // 60) < start_m - 60:
+            break
+        if int(a.timestamp() // 3600) not in have or int(end.timestamp() // 3600) not in have:
+            try:
+                add(as_list(get(API["winds"], "/winds/range", f"date>={stamp(a)}&date<={stamp(end)}&sort=asc")))
+            except Exception as e:
+                print(f"winds history {stamp(a)}: {e}", file=sys.stderr)
+                break
+        end = a
+    out = {}
+    for k, m in hist.items():
+        rows = [[t - start_m] + v for t, v in sorted(m.items()) if t >= start_m]
+        if rows:
+            out[k] = rows
+    return {"t0": start_m, "generated_at": now.isoformat(), "s": out}
+
+
+def previous_hist():
+    base = os.environ.get("PAGES_URL", "").rstrip("/")
+    if not base:
+        return {}
+    try:
+        r = requests.get(base + "/data/winds_hist.json", timeout=30, headers=HEADERS)
+        return r.json() if r.ok else {}
+    except Exception:
+        return {}
+
+
 def efm(now):
     rows = as_list(get(API["efm"], "/lplws_1min/latest"))
     if not rows:
@@ -193,6 +259,16 @@ def main(out):
     except Exception as e:
         result["feeds"]["temps_min"] = {**old.get("temps_min", {"rows": []}), "status": "error", "error": str(e)[:300]}
     os.makedirs(os.path.join(out, "data"), exist_ok=True)
+    try:
+        recent = result["feeds"]["winds_hist"]["rows"] if result["feeds"]["winds_hist"]["status"] == "ok" else []
+        h = winds_24h(now, recent, previous_hist())
+        hp = os.path.join(out, "data", "winds_hist.json")
+        with open(hp + ".tmp", "w") as f:
+            json.dump(h, f, separators=(",", ":"), allow_nan=False)
+        os.replace(hp + ".tmp", hp)
+        print(f"winds_hist.json: {len(h['s'])} sensors, {sum(len(v) for v in h['s'].values())} readings")
+    except Exception as e:
+        print(f"winds history: {e}", file=sys.stderr)
     path = os.path.join(out, "data", "latest.json")
     with open(path + ".tmp", "w") as f:
         json.dump(result, f, separators=(",", ":"), allow_nan=False)

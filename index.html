@@ -208,7 +208,7 @@ body.wall .alert .t{font-size:17px}
 .tb:empty{display:none}
 .tb.warn{background:var(--warn);color:#1a1004} .tb.strong{background:var(--strong);color:#1a1004} .tb.crit{background:var(--crit);color:#fff} .tb.info{background:var(--info);color:#06121c}
 .dash:not(.on){display:none}
-body.wall .tabs, body.wall #dashT, body.wall #dashA, body.wall #dashD{display:none!important}
+body.wall .tabs, body.wall #dashT, body.wall #dashA, body.wall #dashD, body.wall #dashTr, body.wall #dashSnd, body.wall #dashLn{display:none!important}
 body.wall #dash{display:block!important}
 /* temperature tab */
 .ttiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;padding:12px}
@@ -242,6 +242,25 @@ body:not(.wall) .dash > section.sized > .obs, body:not(.wall) .dash > section.si
 .afdjump{display:flex;flex-wrap:wrap;gap:4px}
 .afdjump button{font-size:12px}
 .empty{color:var(--muted);font-size:13px;padding:8px 0}
+/* tropical, sounding, launches */
+.storm{border:1px solid var(--line);border-left:5px solid var(--info);border-radius:8px;background:var(--bg);padding:10px 12px;display:grid;gap:8px}
+.storm.warn{border-left-color:var(--warn)} .storm.crit{border-left-color:var(--crit)}
+.storm .sh{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline} .storm .sname{font-weight:700;font-size:16px} .storm .sdist{font:600 13px var(--f-mono);color:var(--accent)} .storm .sage{margin-left:auto;color:var(--dim);font:12px var(--f-mono)}
+.storm .dec{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px} .storm .dec span{color:var(--muted)} .storm .dec b{color:var(--fg);font-family:var(--f-mono)}
+.cone{width:100%;height:auto;border-radius:6px;display:block} .slinks{display:flex;gap:6px;flex-wrap:wrap}
+.twoimg{width:100%;height:auto;display:block;border-radius:6px}
+#skewT{width:100%;height:560px;display:block}
+body:not(.wall) #skewCard.sized > .pb{flex:1 1 auto;min-height:0} body:not(.wall) #skewCard.sized #skewT{height:100%;min-height:240px}
+.sidx{padding:12px} .sidx .kv small{grid-column:1/-1;color:var(--dim);font-size:11px}
+#sndTable td:first-child, #sndTable th:first-child{text-align:left}
+.launch{display:grid;grid-template-columns:minmax(150px,auto) minmax(0,1fr);gap:8px 16px;border:1px solid var(--line);border-left:5px solid var(--line2);border-radius:8px;background:var(--bg);padding:10px 12px;align-items:start}
+.launch.soon{border-left-color:var(--info)} .launch.hot{border-left-color:var(--crit)}
+.launch .lt{display:grid;gap:6px;justify-items:start} .launch .tm{font:700 20px/1 var(--f-mono)}
+.lst{font:700 11px/1 var(--f-mono);padding:3px 7px;border-radius:3px;background:var(--raised);color:var(--muted)} .lst.go{background:var(--ok);color:#06121c} .lst.hold{background:var(--crit);color:#fff}
+.launch .lname{font-weight:700;font-size:15px} .launch .lname span{font-weight:500;color:var(--muted)}
+.launch .dec{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:4px} .launch .dec span{color:var(--muted)} .launch .dec b{color:var(--fg);font-family:var(--f-mono)}
+.lring{margin-top:6px;font-size:13px;color:var(--ok)} .lring.on{color:var(--crit)}
+@media (max-width:560px){ .launch{grid-template-columns:minmax(0,1fr)} }
 
 /* ===== Customizable card layout ===== */
 .dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;margin-top:16px;align-items:stretch}
@@ -503,6 +522,9 @@ body.wall .stile .sv{font-size:24px}
   <button type="button" role="tab" class="tab" data-tab="temp" id="tab-temp" aria-selected="false"><span>Temperature</span><span class="tb" id="tbT"></span></button>
   <button type="button" role="tab" class="tab" data-tab="admin" id="tab-admin" aria-selected="false"><span>TAF/METAR</span><span class="tb" id="tbA"></span></button>
   <button type="button" role="tab" class="tab" data-tab="afd" id="tab-afd" aria-selected="false"><span>NWS Discussion</span><span class="tb" id="tbD"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="trop" id="tab-trop" aria-selected="false"><span>Tropical</span><span class="tb" id="tbTr"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="snd" id="tab-snd" aria-selected="false"><span>XMR Sounding</span><span class="tb" id="tbSnd"></span></button>
+  <button type="button" role="tab" class="tab" data-tab="launch" id="tab-launch" aria-selected="false"><span>Launches</span><span class="tb" id="tbLn"></span></button>
 </nav>
 <div class="layouttop" id="layoutTop" role="region" aria-label="Layout editing">
   <span><b>Layout mode</b> · drag cards to move them, drag a corner to resize</span>
@@ -681,6 +703,38 @@ body.wall .stile .sv{font-size:24px}
     <div class="ph"><h2 id="afdTitle">Area forecast discussion · NWS Melbourne</h2><span class="meta" id="afdMeta">--</span>
       <div class="afdjump" id="afdJump"></div><a class="btn sm qlink" id="afdLink" href="https://forecast.weather.gov/product.php?site=MLB&amp;issuedby=MLB&amp;product=AFD" target="_blank" rel="noopener noreferrer">Open at NWS <span aria-hidden="true">↗</span></a></div>
     <div class="afd" id="afdBody"><div class="empty">Loading…</div></div>
+  </section>
+</div>
+
+<div class="dash" id="dashTr" data-tab="trop" role="tabpanel" aria-labelledby="tab-trop">
+  <section class="panel" id="tropCard">
+    <div class="ph"><h2>Active Atlantic storms</h2><span class="meta" id="trMeta">--</span></div>
+    <div class="obs" id="trBody"></div>
+  </section>
+  <section class="panel" id="twoCard">
+    <div class="ph"><h2>Tropical weather outlook · 7 day</h2><span class="meta" id="twoMeta">--</span><a class="btn sm qlink" href="https://www.nhc.noaa.gov/gtwo.php?basin=atlc&amp;fdays=7" target="_blank" rel="noopener noreferrer">Open at NHC <span aria-hidden="true">↗</span></a></div>
+    <div class="pb"><img id="twoImg" class="twoimg" alt="NHC Atlantic 7-day tropical weather outlook graphic" onerror="this.hidden=true" onload="this.hidden=false"></div>
+    <div class="afd" id="twoText"></div>
+  </section>
+</div>
+
+<div class="dash" id="dashSnd" data-tab="snd" role="tabpanel" aria-labelledby="tab-snd">
+  <section class="panel" id="skewCard">
+    <div class="ph"><h2>XMR sounding · Skew-T</h2><span class="meta" id="sndMeta">--</span><a class="btn sm qlink" href="https://www.spc.noaa.gov/exper/soundings/LATEST/XMR.gif" target="_blank" rel="noopener noreferrer">SPC plot <span aria-hidden="true">↗</span></a></div>
+    <div class="pb" style="padding:8px"><canvas id="skewT" aria-label="Skew-T log-P diagram of the latest Cape Canaveral sounding"></canvas></div>
+    <div class="legend"><span><span class="sw" style="background:#ff5161"></span>Temperature</span><span><span class="sw" style="background:#3bc98a"></span>Dew point</span><span><span class="sw" style="background:#cfdbe0"></span>Surface parcel (dashed)</span><span>Blue line 0 °C · orange −10 °C and −20 °C · barbs in kt</span></div>
+  </section>
+  <section class="panel" id="sidxCard">
+    <div class="ph"><h2>Key levels &amp; indices</h2><span class="meta" id="sidxMeta"></span></div>
+    <div class="kvs sidx" id="sidxBody"></div>
+    <div class="tablewrap"><table id="sndTable"><thead><tr><th>mb</th><th>Hgt ft</th><th>T °C</th><th>Td °C</th><th>Dir</th><th>kt</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</div>
+
+<div class="dash" id="dashLn" data-tab="launch" role="tabpanel" aria-labelledby="tab-launch">
+  <section class="panel" id="launchCard">
+    <div class="ph"><h2>Upcoming launches · Cape Canaveral &amp; KSC</h2><span class="meta" id="lnMeta">--</span><a class="btn sm qlink" href="https://www.patrick.spaceforce.mil/" target="_blank" rel="noopener noreferrer">SLD 45 <span aria-hidden="true">↗</span></a></div>
+    <div class="obs" id="lnBody"></div>
   </section>
 </div>
 
@@ -2240,8 +2294,8 @@ function renderAfd(){ const off=(S.afdOffice||"MLB").toUpperCase();
 function markAfdSeen(){ if(afd.id && afd.seen!==afd.id){ afd.seen=afd.id; try{ localStorage.setItem("45ws_afd_seen",afd.id); }catch(e){} } }
 
 /* ===== Tabs ===== */
-let curTab = (()=>{ try{ const t=localStorage.getItem("45ws_tab"); return ["lw","temp","admin","afd"].includes(t)? t : "lw"; }catch(e){ return "lw"; } })();
-function setTab(t){ if(!["lw","temp","admin","afd"].includes(t)) t="lw"; curTab=t;
+let curTab = (()=>{ try{ const t=localStorage.getItem("45ws_tab"); return ["lw","temp","admin","afd","trop","snd","launch"].includes(t)? t : "lw"; }catch(e){ return "lw"; } })();
+function setTab(t){ if(!["lw","temp","admin","afd","trop","snd","launch"].includes(t)) t="lw"; curTab=t;
   for(const b of document.querySelectorAll(".tab")){ const on=b.dataset.tab===t; b.setAttribute("aria-selected",String(on)); b.tabIndex=on?0:-1; }
   for(const [k,box] of Object.entries(TABBOX)) box.classList.toggle("on", k===t);
   try{ localStorage.setItem("45ws_tab",t); }catch(e){}
@@ -2267,14 +2321,175 @@ function initTabs(){ const tabs=[...document.querySelectorAll(".tab")];
   setTimeout(()=>{ pollFcst(); pollAvwx(); pollAfd(); tempBackfill(); }, 1500);
   setInterval(()=>{ renderTChart(); if(curTab==="admin") renderAvwx(); }, 60000); }
 
+/* ===== Tropical, XMR sounding and launch schedule tabs ===== */
+var X_READY = false;
+const CAPE_LL = [28.49, -80.58];
+function nmBetween(la1,lo1,la2,lo2){ const R=3440.065, r=Math.PI/180, dLa=(la2-la1)*r, dLo=(lo2-lo1)*r; const a=Math.sin(dLa/2)**2+Math.cos(la1*r)*Math.cos(la2*r)*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(a)); }
+async function extOrSnap(url, feed){ try{ return {data:await getExt(url), src:new URL(url).host}; }
+  catch(e){ if(SNAP.on){ const f=await snapFeed(feed); return {data:f.data!==undefined? f.data : f.rows, src:"GitHub Actions collector"}; } throw e; } }
+
+/* ---- Tropical ---- */
+const trop = { storms:[], two:"", twoAt:0, at:0, err:"", twoErr:"", timer:0, seen:new Set() };
+const NHC = "https://www.nhc.noaa.gov";
+async function pollTrop(){ clearTimeout(trop.timer);
+  try{ const r=await extOrSnap(NHC+"/CurrentStorms.json","nhc_storms"); const d=r.data||{}; trop.storms=(Array.isArray(d)? d : d.activeStorms||[]).filter(s=>/^al/i.test(s.id||"")); trop.src=r.src; trop.at=Date.now(); trop.err=""; }
+  catch(e){ trop.err=e.message||String(e); }
+  try{ const l=await getExt("https://api.weather.gov/products/types/TWO/locations/NHC"); const g=(l["@graph"]||[]);
+    const at=g.find(x=>/ABNT20/.test(x.wmoCollectiveId||"")) || g[0];
+    if(at){ const p=await getExt("https://api.weather.gov/products/"+at.id); trop.two=p.productText||""; trop.twoAt=Date.parse(p.issuanceTime||at.issuanceTime||""); trop.twoErr=""; } }
+  catch(e){ trop.twoErr=e.message||String(e); }
+  for(const s of trop.storms){ const k=(s.id||"")+"|"+(s.classification||""); if(trop.seen.has(k)) continue; trop.seen.add(k);
+    const d=stormNm(s); logEvent("nws", `NHC ${stormTitle(s)}`, d!=null? `${Math.round(d)} NM from the Cape` : "", s.headline||""); 
+    if(d!=null && d<=500) raise({key:"trop:"+s.id, kind:"nws", group:"other", level:d<=200?"strong":"warn", title:`${stormTitle(s)} ${Math.round(d)} NM from the Cape`, detail:`${s.intensity? s.intensity+" kt":""}${s.movementDir!=null? ` · moving toward ${s.movementDir}° at ${s.movementSpeed} mph`:""}`}); }
+  renderTrop(); trop.timer=setTimeout(pollTrop, 30*60000); }
+const CLS = { TD:"Tropical Depression", TS:"Tropical Storm", HU:"Hurricane", MH:"Major Hurricane", STD:"Subtropical Depression", STS:"Subtropical Storm", PTC:"Potential Tropical Cyclone", PC:"Post-tropical Cyclone", TY:"Typhoon" };
+const stormTitle = s => `${CLS[s.classification]||s.classification||"Storm"} ${s.name||""}`.trim();
+const stormLL = s => { const la=num(s.latitudeNumeric ?? parseFloat(s.latitude)), lo=num(s.longitudeNumeric ?? -Math.abs(parseFloat(s.longitude))); return la==null||lo==null? null : [la,lo]; };
+const stormNm = s => { const p=stormLL(s); return p? nmBetween(CAPE_LL[0],CAPE_LL[1],p[0],p[1]) : null; };
+const binDir = s => { const m=String(s.binNumber||"").match(/^([A-Z]{2})(\d+)$/i); return m? m[1].toUpperCase()+m[2].padStart(2,"0") : ""; };
+function renderTrop(){ const bucket=Math.floor(Date.now()/(30*60000));
+  $("#trMeta").textContent = trop.err && !trop.at? `Couldn't reach NHC: ${trop.err}` : trop.at? `${trop.src} · checked ${hhmmZ(trop.at)}${trop.err?" · last refresh failed":""}` : "Loading…";
+  const list=[...trop.storms].sort((a,b)=>(stormNm(a)??1e9)-(stormNm(b)??1e9));
+  $("#trBody").innerHTML = list.length? list.map(s=>{ const d=stormNm(s), dir=binDir(s), id=String(s.id||"").toUpperCase(), cls=d!=null&&d<=200? "crit" : d!=null&&d<=500? "warn" : "";
+      const cone = dir&&id? `${NHC}/storm_graphics/${dir}/${id}_5day_cone_with_line_and_wind.png` : "", toa = dir&&id? `${NHC}/graphics_${dir.toLowerCase()}.shtml?mltoa34` : "";
+      return `<div class="storm ${cls}"><div class="sh"><span class="sname">${esc(stormTitle(s))}</span>${d!=null?`<span class="sdist">${Math.round(d)} NM from the Cape</span>`:""}<span class="sage">${s.lastUpdate? "advisory "+hhmmZ(Date.parse(s.lastUpdate)) : ""}</span></div>
+        <div class="dec"><span>Winds <b>${s.intensity??"—"} kt</b></span><span>Pressure <b>${s.pressure??"—"} mb</b></span><span>Center <b>${stormLL(s)? stormLL(s).map((v,i)=>Math.abs(v).toFixed(1)+(i?(v<0?"W":"E"):(v<0?"S":"N"))).join(" ") : "—"}</b></span><span>Moving <b>${s.movementDir!=null? s.movementDir+"° at "+s.movementSpeed+" mph" : "—"}</b></span></div>
+        ${cone?`<a href="${cone}" target="_blank" rel="noopener noreferrer"><img class="cone" src="${cone}?t=${bucket}" alt="NHC 5-day forecast cone for ${esc(stormTitle(s))}" loading="lazy" onerror="this.closest('a').hidden=true"></a>`:""}
+        <div class="slinks">${s.publicAdvisory&&s.publicAdvisory.url?`<a class="btn sm qlink" href="${esc(s.publicAdvisory.url)}" target="_blank" rel="noopener noreferrer">Public advisory ↗</a>`:""}${toa?`<a class="btn sm qlink" href="${toa}" target="_blank" rel="noopener noreferrer">TS wind arrival ↗</a>`:""}</div></div>`; }).join("")
+    : `<div class="empty">${trop.at? "No active Atlantic tropical cyclones." : trop.err? "Couldn't load active storms." : "Loading…"}</div>`;
+  $("#twoImg").src=`${NHC}/xgtwo/two_atl_7d0.png?t=${bucket}`;
+  $("#twoMeta").textContent = trop.twoAt? `issued ${hhmmZ(trop.twoAt)} · ${ago(Date.now()-trop.twoAt)} ago` : trop.twoErr? "Couldn't load the outlook text" : "Loading…";
+  $("#twoText").innerHTML = trop.two? `<pre>${esc(trop.two.replace(/^[\s\S]*?(?=Tropical Weather Outlook|For the North Atlantic)/i,""))}</pre>` : "";
+  renderXBadges(); }
+
+/* ---- XMR sounding ---- */
+const snd = { stn:"KXMR", prof:null, valid:0, at:0, err:"", timer:0, src:"" };
+const ymdh = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}00`;
+async function pollSnd(){ clearTimeout(snd.timer);
+  try{ let got=null, src="";
+    let t=new Date(); t.setUTCMinutes(0,0,0); t.setUTCHours(t.getUTCHours()>=12?12:0);
+    for(let i=0;i<4 && !got;i++){ const url=`https://mesonet.agron.iastate.edu/json/raob.py?station=${snd.stn}&ts=${ymdh(t)}`;
+      try{ const j=await getExt(url); const p=(j.profiles||[])[0]; if(p && (p.profile||[]).length>5){ got=p; src="Iowa Environmental Mesonet"; } }catch(e){ if(i===0 && SNAP.on){ const f=await snapFeed("raob"); const p=(f.rows||[])[0]; if(p){ got=p; src="GitHub Actions collector"; } } else if(i===0) throw e; }
+      t=new Date(+t-12*3600e3); }
+    if(!got) throw new Error("No recent sounding found for "+snd.stn);
+    snd.prof=(got.profile||[]).map(l=>({p:num(l.pres), z:num(l.hght), t:num(l.tmpc), td:num(l.dwpc), dir:num(l.drct), kt:num(l.sknt)})).filter(l=>l.p!=null).sort((a,b)=>b.p-a.p);
+    snd.valid=Date.parse(got.valid); snd.at=Date.now(); snd.err=""; snd.src=src; }
+  catch(e){ snd.err=e.message||String(e); }
+  renderSnd(); snd.timer=setTimeout(pollSnd, 30*60000); }
+// thermodynamics
+const C2K=t=>t+273.15, esat=tc=>6.112*Math.exp(17.67*tc/(tc+243.5)), mixr=(tc,p)=>{ const e=esat(tc); return 0.622*e/(p-e); };
+function moistStep(tk,p,dp){ const Rd=287.04, cp=1005.7, L=2.501e6, eps=0.622, rs=mixr(tk-273.15,p);
+  const f=(T)=>{ const r=mixr(T-273.15,p); return (Rd*T+L*r)/(p*(cp+L*L*r*eps/(Rd*T*T))); }; return tk+f(tk)*dp; }
+function parcel(prof){ const s=prof[0]; if(!s||s.t==null||s.td==null) return null;
+  const T=C2K(s.t), Td=C2K(s.td), Tl=1/(1/(Td-56)+Math.log(T/Td)/800)+56, pl=s.p*Math.pow(Tl/T,1/0.2857);
+  const at=p=>{ if(p>=pl) return T*Math.pow(p/s.p,0.2857)-273.15; let tk=Tl, pp=pl; while(pp-1>p){ const dp=-Math.min(5,pp-p); tk=moistStep(tk,pp,dp); pp+=dp; } return tk-273.15; };
+  return {at, plcl:pl}; }
+function interp(prof, key, p){ for(let i=0;i<prof.length-1;i++){ const a=prof[i], b=prof[i+1]; if(a.p>=p && b.p<=p && a[key]!=null && b[key]!=null){ const f=Math.log(a.p/p)/Math.log(a.p/b.p); return a[key]+(b[key]-a[key])*f; } } return null; }
+function heightOfT(prof, tc){ for(let i=0;i<prof.length-1;i++){ const a=prof[i], b=prof[i+1]; if(a.t==null||b.t==null||a.z==null||b.z==null) continue; if(a.t>=tc && b.t<tc){ return a.z+(b.z-a.z)*(a.t-tc)/(a.t-b.t); } } return null; }
+function sndIndices(prof){ if(!prof||prof.length<5) return null; const pc=parcel(prof); let cape=0, cin=0, lfc=null;
+  if(pc) for(let i=0;i<prof.length-1;i++){ const a=prof[i], b=prof[i+1]; if(a.t==null||b.t==null||a.z==null||b.z==null||b.p<100) continue;
+    const da=(C2K(pc.at(a.p))-C2K(a.t))/C2K(a.t), db=(C2K(pc.at(b.p))-C2K(b.t))/C2K(b.t), e=9.81*(da+db)/2*(b.z-a.z);
+    if(e>0){ cape+=e; if(lfc==null) lfc=a.p; } else if(lfc==null) cin+=e; }
+  let pw=0; for(let i=0;i<prof.length-1;i++){ const a=prof[i], b=prof[i+1]; if(a.td==null||b.td==null||b.p<300) continue; pw+=(mixr(a.td,a.p)+mixr(b.td,b.p))/2*(a.p-b.p)*100/9.81; }
+  const T5=interp(prof,"t",500), T7=interp(prof,"t",700), T8=interp(prof,"t",850), D8=interp(prof,"td",850), D7=interp(prof,"td",700);
+  const li = pc && T5!=null? T5-pc.at(500) : null, ki = [T8,T5,D8,T7,D7].every(v=>v!=null)? (T8-T5)+D8-(T7-D7) : null;
+  let u=0,v=0,wsum=0; for(const l of prof){ if(l.p>850||l.p<300||l.dir==null||l.kt==null) continue; const w=l.p, r=l.dir*Math.PI/180; u+=-l.kt*Math.sin(r)*w; v+=-l.kt*Math.cos(r)*w; wsum+=w; }
+  const mw = wsum? {kt:Math.hypot(u,v)/wsum, dir:(Math.atan2(-u,-v)*180/Math.PI+360)%360} : null;
+  return { fzl:heightOfT(prof,0), m10:heightOfT(prof,-10), m20:heightOfT(prof,-20), cape:Math.round(cape), cin:Math.round(cin), li, ki, pw:pw/25.4, mw, plcl:pc&&pc.plcl, lfc, pc }; }
+const ftOf = m => m==null? "—" : `${Math.round(m*3.28084/100)*100}`.replace(/\B(?=(\d{3})+(?!\d))/g,",")+" ft";
+function renderSnd(){ const I=sndIndices(snd.prof);
+  $("#sndMeta").textContent = snd.err && !snd.prof? `Couldn't load: ${snd.err}` : snd.valid? `${snd.stn} ${new Date(snd.valid).toISOString().slice(5,10).replace("-","/")} ${hhmmZ(snd.valid)} · ${snd.src}${snd.err?" · last refresh failed":""}` : "Loading…";
+  $("#sidxMeta").textContent = snd.valid? `valid ${hhmmZ(snd.valid)} · ${ago(Date.now()-snd.valid)} ago` : "";
+  const row=(k,v,h="")=>`<div class="kv"><span>${k}</span><b>${v}</b>${h?`<small>${h}</small>`:""}</div>`;
+  $("#sidxBody").innerHTML = I? [
+      row("Freezing level", ftOf(I.fzl), "0 °C"), row("−10 °C height", ftOf(I.m10), "charging zone"), row("−20 °C height", ftOf(I.m20)),
+      row("Surface CAPE", `${I.cape} J/kg`, I.cin<-1? `CIN ${I.cin}` : ""), row("Lifted index", I.li==null?"—":I.li.toFixed(1)), row("K index", I.ki==null?"—":Math.round(I.ki)),
+      row("Precipitable water", `${I.pw.toFixed(2)} in`), row("850–300 mb mean wind", I.mw? `${String(Math.round(I.mw.dir/10)*10).padStart(3,"0")}° ${Math.round(I.mw.kt)} kt` : "—", "steering flow (from)"),
+      row("LCL", I.plcl? `${Math.round(I.plcl)} mb` : "—"), row("LFC", I.lfc? `${Math.round(I.lfc)} mb` : "none") ].join("")
+    : `<div class="empty">${snd.err? esc(snd.err) : "Loading…"}</div>`;
+  const L=snd.prof||[], mand=[1000,925,850,700,500,400,300,250,200,150,100];
+  $("#sndTable tbody").innerHTML = L.filter(l=>mand.includes(Math.round(l.p))||l===L[0]).map(l=>`<tr><td>${Math.round(l.p)}${l===L[0]?" sfc":""}</td><td>${l.z==null?"—":Math.round(l.z*3.28084).toLocaleString()}</td><td>${fmtT(l.t)}</td><td>${fmtT(l.td)}</td><td>${l.dir==null?"—":String(Math.round(l.dir)).padStart(3,"0")+"°"}</td><td>${l.kt==null?"—":Math.round(l.kt)}</td></tr>`).join("");
+  renderSkew(); renderXBadges(); }
+function renderSkew(){ const cv=$("#skewT"); if(!cv) return; const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const c=cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,w,h); const mono=getComputedStyle(document.body).getPropertyValue("--f-mono")||"monospace"; c.font="11px "+mono;
+  const pl=40, pr=70, pt=10, pb=22, iw=w-pl-pr, ih=h-pt-pb, P0=1050, P1=100, T0=-40, T1=45, skew=iw*0.9;
+  const up=p=>Math.log(P0/p)/Math.log(P0/P1), Y=p=>pt+ih*(1-up(p)), X=(t,p)=>pl+(t-T0)/(T1-T0)*iw+up(p)*skew*0.55;   // log-p up the page, isotherms skewed 45°-ish
+  c.save(); c.beginPath(); c.rect(pl,pt,iw,ih); c.clip();
+  // isobars, isotherms, dry adiabats
+  c.lineWidth=1; for(const p of [1000,850,700,500,400,300,250,200,150,100]){ c.strokeStyle="#ffffff14"; c.beginPath(); c.moveTo(pl,Y(p)); c.lineTo(pl+iw,Y(p)); c.stroke(); }
+  for(let t=-100;t<=50;t+=10){ c.strokeStyle= t===0? "#6cb6ff88" : t===-10||t===-20? "#e9a23b55" : "#ffffff10"; c.lineWidth=t===0?1.5:1; c.beginPath(); c.moveTo(X(t,P0),Y(P0)); c.lineTo(X(t,P1),Y(P1)); c.stroke(); }
+  c.strokeStyle="#3bc98a22"; for(let th=250;th<=450;th+=10){ c.beginPath(); for(let p=P0;p>=P1;p-=25){ const t=th*Math.pow(p/1000,0.2857)-273.15; p===P0? c.moveTo(X(t,p),Y(p)) : c.lineTo(X(t,p),Y(p)); } c.stroke(); }
+  const L=(snd.prof||[]).filter(l=>l.p>=P1);
+  const line=(key,col,wd)=>{ c.beginPath(); let st=false; for(const l of L){ if(l[key]==null) continue; const x=X(l[key],l.p), y=Y(l.p); st? c.lineTo(x,y) : (c.moveTo(x,y), st=true); } c.strokeStyle="rgba(0,0,0,.6)"; c.lineWidth=wd+2; c.stroke(); c.strokeStyle=col; c.lineWidth=wd; c.stroke(); };
+  const I=sndIndices(snd.prof);
+  if(I && I.pc){ c.setLineDash([5,4]); c.beginPath(); let st=false; for(let p=L[0].p; p>=Math.max(P1,150); p-=10){ const x=X(I.pc.at(p),p), y=Y(p); st? c.lineTo(x,y) : (c.moveTo(x,y), st=true); } c.strokeStyle="#cfdbe0aa"; c.lineWidth=1.3; c.stroke(); c.setLineDash([]); }
+  line("td","#3bc98a",2.2); line("t","#ff5161",2.4); c.restore();
+  // labels
+  c.fillStyle="#7a8a93"; c.textAlign="right"; for(const p of [1000,850,700,500,400,300,250,200,150,100]) c.fillText(p,pl-5,Y(p)+4);
+  c.textAlign="center"; for(let t=-40;t<=40;t+=10){ const x=X(t,P0); if(x>pl&&x<pl+iw) c.fillText(t+"°",x,h-6); }
+  for(const [tc,lab,col] of [[0,"0°C","#6cb6ff"],[-10,"−10°C","#e9a23b"],[-20,"−20°C","#e9a23b"]]){ const z=heightOfT(snd.prof||[],tc); if(z==null) continue; const p=interpP(snd.prof,z); if(p==null) continue; c.fillStyle=col; c.textAlign="left"; c.fillText(`${lab} ${ftOf(z)}`, pl+6, Y(p)-3); c.strokeStyle=col+"66"; c.setLineDash([3,3]); c.beginPath(); c.moveTo(pl,Y(p)); c.lineTo(pl+iw,Y(p)); c.stroke(); c.setLineDash([]); }
+  // wind barbs on the right
+  const bx=pl+iw+34; let lastY=-99; for(const l of L){ if(l.dir==null||l.kt==null) continue; const y=Y(l.p); if(Math.abs(y-lastY)<18) continue; lastY=y; barb(c,bx,y,l.dir,l.kt); }
+  if(!L.length){ c.fillStyle="#7a8a93"; c.textAlign="center"; c.fillText(snd.err? "No sounding loaded" : "Loading sounding…", pl+iw/2, pt+ih/2); } }
+function interpP(prof,z){ for(let i=0;i<prof.length-1;i++){ const a=prof[i], b=prof[i+1]; if(a.z==null||b.z==null) continue; if(a.z<=z && b.z>=z){ const f=(z-a.z)/(b.z-a.z); return Math.exp(Math.log(a.p)+(Math.log(b.p)-Math.log(a.p))*f); } } return null; }
+function barb(c,x,y,dir,kt){ const r=(dir)*Math.PI/180, L=24, ux=Math.sin(r), uy=-Math.cos(r); c.strokeStyle="#d8e2e7"; c.fillStyle="#d8e2e7"; c.lineWidth=1.3;
+  if(kt<2.5){ c.beginPath(); c.arc(x,y,3,0,Math.PI*2); c.stroke(); return; }
+  const ex=x+ux*L, ey=y+uy*L; c.beginPath(); c.moveTo(x,y); c.lineTo(ex,ey); c.stroke();
+  let k=Math.round(kt/5)*5, pos=0; const px=-uy, py=ux, step=4;
+  const at=d=>[ex-ux*d, ey-uy*d];
+  while(k>=50){ const [ax,ay]=at(pos), [bx2,by2]=at(pos+6); c.beginPath(); c.moveTo(ax,ay); c.lineTo(ax+px*10,ay+py*10); c.lineTo(bx2,by2); c.closePath(); c.fill(); pos+=8; k-=50; }
+  while(k>=10){ const [ax,ay]=at(pos); c.beginPath(); c.moveTo(ax,ay); c.lineTo(ax+px*10+ux*3,ay+py*10+uy*3); c.stroke(); pos+=step; k-=10; }
+  if(k>=5){ if(pos===0) pos=step; const [ax,ay]=at(pos); c.beginPath(); c.moveTo(ax,ay); c.lineTo(ax+px*5+ux*1.5,ay+py*5+uy*1.5); c.stroke(); } }
+
+/* ---- Launch schedule ---- */
+const ll = { list:[], at:0, err:"", timer:0, src:"" };
+const LL_URL = "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?location__ids=12,27&limit=12";
+async function pollLaunch(){ clearTimeout(ll.timer);
+  try{ const r=await extOrSnap(LL_URL, "launches"); const d=r.data||{}; ll.list=(Array.isArray(d)? d : d.results||[]); ll.at=Date.now(); ll.err=""; ll.src=r.src==="ll.thespacedevs.com"? "The Space Devs Launch Library" : r.src;
+    try{ localStorage.setItem("45ws_launches", JSON.stringify({at:ll.at, list:ll.list})); }catch(e){} }
+  catch(e){ ll.err=e.message||String(e); }
+  renderLaunch(); ll.timer=setTimeout(pollLaunch, 30*60000); }
+try{ const c=JSON.parse(localStorage.getItem("45ws_launches")||"null"); if(c && c.list){ ll.list=c.list; ll.at=c.at; ll.src="saved copy"; } }catch(e){}
+const padOf = L => (L.pad && (L.pad.name||L.pad)) || "";
+function padRing(L){ const m=String(padOf(L)).match(/(\d{2})\s*([AB])?/); if(!m) return null; const n=m[1];
+  return RINGS.find(r=>r.name.split(/[-\/\s]+/).some(t=>t===n || t===n+(m[2]||""))) || null; }
+function ringNow(r){ const now=Date.now(), W=S.window*60000; let last=0; for(const s of strikes.values()) if(now-s.t<=W && s.inR.includes(r.name)) last=Math.max(last,s.t); return last? {active:true, clear:last+W} : {active:false}; }
+function tminus(ms){ const neg=ms<0; ms=Math.abs(ms); const d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), s=Math.floor(ms%6e4/1000);
+  return (neg?"T+":"T−")+(d? `${d}d ${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`); }
+function renderLaunch(){ const now=Date.now(), list=ll.list.filter(L=>Date.parse(L.window_end||L.net)>now-3600e3).sort((a,b)=>Date.parse(a.net)-Date.parse(b.net));
+  $("#lnMeta").textContent = ll.err && !ll.at? `Couldn't load launches: ${ll.err}` : ll.at? `${ll.src} · updated ${hhmmZ(ll.at)}${ll.err?" · last refresh failed":""}` : "Loading…";
+  $("#lnBody").innerHTML = list.length? list.map(L=>{ const net=Date.parse(L.net), ws=Date.parse(L.window_start||L.net), we=Date.parse(L.window_end||L.net), st=(L.status&&(L.status.abbrev||L.status.name))||"", r=padRing(L), rn=r? ringNow(r) : null;
+      const veh=(L.rocket&&L.rocket.configuration&&(L.rocket.configuration.full_name||L.rocket.configuration.name)) || L.name.split("|")[0].trim(), mis=(L.mission&&L.mission.name) || (L.name.split("|")[1]||"").trim(), orbit=L.mission&&L.mission.orbit&&L.mission.orbit.abbrev;
+      const prov=(L.launch_service_provider&&L.launch_service_provider.name)||L.lsp_name||"", soon=net-now<24*3600e3;
+      const loc=new Date(net), dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][loc.getDay()];
+      return `<div class="launch${soon?" soon":""}${rn&&rn.active?" hot":""}"><div class="lt"><span class="tm" data-net="${net}">${tminus(net-now)}</span><span class="lst ${/^go/i.test(st)?"go":/hold|scrub/i.test(st)?"hold":""}">${esc(st)}</span></div>
+        <div class="lmain"><div class="lname">${esc(veh)}${mis?` · <span>${esc(mis)}</span>`:""}</div>
+        <div class="dec"><span>NET <b>${new Date(net).toISOString().slice(5,10).replace("-","/")} ${hhmmZ(net)}</b> · ${dn} ${pad(loc.getHours())}${pad(loc.getMinutes())} L</span>${we>ws? `<span>Window <b>${hhmmZ(ws)}–${hhmmZ(we)}</b></span>` : `<span>Window <b>instantaneous</b></span>`}<span>Pad <b>${esc(padOf(L))}</b></span>${prov?`<span>${esc(prov)}</span>`:""}${orbit?`<span>Orbit <b>${esc(orbit)}</b></span>`:""}</div>
+        ${r? `<div class="lring ${rn.active?"on":""}">Ring ${esc(r.name)}: ${rn.active? `<b>lightning active</b> · clears ${hhmmZ(rn.clear)} if no more strikes` : "clear"}</div>` : ""}</div></div>`; }).join("")
+    : `<div class="empty">${ll.err? "No launch data loaded." : ll.at? "No upcoming launches listed for the Cape or KSC." : "Loading…"}</div>`;
+  renderXBadges(); }
+setInterval(()=>{ if(!X_READY) return; const now=Date.now(); document.querySelectorAll("#lnBody .tm[data-net]").forEach(e=>{ e.textContent=tminus(+e.dataset.net-now); }); if(Date.now()%15000<1000) { renderXBadges(); if(curTab==="launch") renderLaunch(); } }, 1000);
+
+function renderXBadges(){ if(!X_READY) return; const tb=$("#tbTr"), sb=$("#tbSnd"), lb=$("#tbLn"); if(!tb) return;
+  const n=trop.storms.length, near=trop.storms.map(stormNm).filter(d=>d!=null).sort((a,b)=>a-b)[0];
+  tb.textContent = n? `${n} active` : ""; tb.className="tb"+(n? (near!=null&&near<=200?" crit":near!=null&&near<=500?" warn":" info") : "");
+  const I=sndIndices(snd.prof); sb.textContent = I&&I.fzl!=null? `FZL ${Math.round(I.fzl*3.28084/100)/10}k` : ""; sb.className="tb"+(I&&I.fzl!=null?" info":"");
+  const nx=ll.list.map(L=>Date.parse(L.net)).filter(t=>t>Date.now()-3600e3).sort((a,b)=>a-b)[0];
+  if(nx){ const d=nx-Date.now(); lb.textContent = d<0? "launching" : d<48*3600e3? `T−${Math.floor(d/36e5)}h${pad(Math.floor(d%36e5/6e4))}` : `${Math.round(d/864e5)}d`; lb.className="tb"+(d<6*3600e3?" warn":" info"); }
+  else { lb.textContent=""; lb.className="tb"; } }
+X_READY = true;
+function initX(){ renderTrop(); renderSnd(); renderLaunch(); setTimeout(()=>{ pollTrop(); pollSnd(); pollLaunch(); }, 2500); }
+
 /* ===== Customizable card layout (per viewer, saved in this browser) ===== */
 const LAYOUT_KEY="45ws_layout_v1";
 const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log",
-  tempCard:"Tower temperatures", fcCard:"NWS forecast lows", tTrendCard:"Temperature trend", metarCard:"METARs", tafCard:"TAFs", afdCard:"Forecast discussion"};
-const CARD_TAB={tempCard:"temp", fcCard:"temp", tTrendCard:"temp", metarCard:"admin", tafCard:"admin", afdCard:"afd"};
-const TABBOX={lw:$("#dash"), temp:$("#dashT"), admin:$("#dashA"), afd:$("#dashD")};
+  tempCard:"Tower temperatures", fcCard:"NWS forecast lows", tTrendCard:"Temperature trend", metarCard:"METARs", tafCard:"TAFs", afdCard:"Forecast discussion",
+  tropCard:"Active storms", twoCard:"Tropical outlook", skewCard:"Skew-T", sidxCard:"Key levels & indices", launchCard:"Launch schedule"};
+const CARD_TAB={tempCard:"temp", fcCard:"temp", tTrendCard:"temp", metarCard:"admin", tafCard:"admin", afdCard:"afd", tropCard:"trop", twoCard:"trop", skewCard:"snd", sidxCard:"snd", launchCard:"launch"};
+const TABBOX={lw:$("#dash"), temp:$("#dashT"), admin:$("#dashA"), afd:$("#dashD"), trop:$("#dashTr"), snd:$("#dashSnd"), launch:$("#dashLn")};
 const boxOf = id => TABBOX[CARD_TAB[id]||"lw"];
-const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:6, logCard:12, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6, tempCard:7, fcCard:5, metarCard:6, tafCard:6}, h:{}, hide:[]};
+const LAYOUT_DEF={order:Object.keys(CARDS), span:{lightPanel:6, ringsCard:6, logCard:12, tdCard:6, tmapCard:6, "wp-KSC":6, "wp-CCSFS":6, tempCard:7, fcCard:5, metarCard:6, tafCard:6, tropCard:6, twoCard:6, skewCard:7, sidxCard:5}, h:{}, hide:[]};
 let LAY=(()=>{ try{ const o=JSON.parse(localStorage.getItem(LAYOUT_KEY)||"null"); if(o && Array.isArray(o.order)) return {order:o.order, span:o.span||{}, h:o.h||{}, hide:o.hide||[]}; }catch(e){} return structuredClone(LAYOUT_DEF); })();
 function layoutSave(){ try{ localStorage.setItem(LAYOUT_KEY, JSON.stringify(LAY)); }catch(e){} }
 const dashEl=$("#dash"), cardEl=id=>document.getElementById(id);
@@ -2289,8 +2504,8 @@ function applyLayout(){ const ids=[...LAY.order.filter(id=>CARDS[id]), ...Object
   ids.forEach(applyCard); renderHiddenList(); relayoutSoon(); }
 function renderHiddenList(){ const box=$("#lyHidden"); box.innerHTML = LAY.hide.filter(id=>CARDS[id]).map(id=>`<button type="button" class="btn sm" data-show="${id}">Show ${CARDS[id]}</button>`).join("");
   box.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ LAY.hide=LAY.hide.filter(x=>x!==b.dataset.show); layoutSave(); applyCard(b.dataset.show); renderHiddenList(); relayoutSoon(); }); }
-let rlT; function relayoutSoon(){ clearTimeout(rlT); rlT=setTimeout(()=>{ try{ renderAllMaps(); renderChart(); renderNet(); }catch(e){} try{ renderTChart(); renderFcChart(); }catch(e){} },120); }
-if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#tmap","#chart","#netChart","#tChart","#fcChart"].forEach(q=>{ const el=$(q); if(el) ro.observe(el); }); }
+let rlT; function relayoutSoon(){ clearTimeout(rlT); rlT=setTimeout(()=>{ try{ renderAllMaps(); renderChart(); renderNet(); }catch(e){} try{ renderTChart(); renderFcChart(); renderSkew(); }catch(e){} },120); }
+if(window.ResizeObserver){ const ro=new ResizeObserver(relayoutSoon); ["#map","#tmap","#chart","#netChart","#tChart","#fcChart","#skewT"].forEach(q=>{ const el=$(q); if(el) ro.observe(el); }); }
 // edit overlay on every card
 for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(!el) continue;
   const cv=document.createElement("div"); cv.className="ccover"; cv.dataset.card=id;
@@ -2353,7 +2568,7 @@ $("#lyDone").onclick=()=>setLayoutEdit(false);
 function layoutDefault(){ LAY=structuredClone(LAYOUT_DEF); layoutSave(); for(const id of Object.keys(CARDS)){ const el=cardEl(id); if(el){ el.style.removeProperty("--ch"); } } applyLayout(); window.scrollTo({top:0,behavior:"smooth"}); }
 $("#lyReset").onclick=layoutDefault; $("#lyReset2").onclick=layoutDefault; $("#lyDone2").onclick=()=>setLayoutEdit(false);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && document.body.classList.contains("layout-edit")) setLayoutEdit(false); });
-applyLayout(); initTabs();
+applyLayout(); initTabs(); initX();
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 45th Weather Squadron Operations Dashboard - data collector.
 
 Run by GitHub Actions every ~5 minutes. Fetches the Merlin lightning, WINDS and
-field mill (LPLWS) APIs and writes <out>/data/latest.json, which the dashboard
+field mill (LPLWS) APIs, plus METARs and TAFs from aviationweather.gov, and writes <out>/data/latest.json, which the dashboard
 reads from the same site. If a feed fails, the last good data from the live
 site is kept and the feed is marked with its error.
 
@@ -20,7 +20,9 @@ API = {
     "c2c":   "https://codiapi-lightningc2c.rad.spaceforce.mil",
     "winds": "https://codiapi-winds1.rad.spaceforce.mil",
     "efm":   "https://codiapi-lplws1.rad.spaceforce.mil",
+    "avwx":  "https://aviationweather.gov",
 }
+STATIONS = os.environ.get("WX_STATIONS", "KXMR,KTTS,KCOF,KMLB")
 API.update(json.loads(os.environ.get("WX_API_OVERRIDE", "{}")))   # for testing only
 BOX = {"lat": (26.0, 31.0), "lon": (-84.0, -77.0)}                 # lightning area kept (Florida and waters)
 LIGHTNING_MIN, WIND_HIST_MIN = 60, 60
@@ -84,8 +86,9 @@ def winds(now):
 def winds_hist(now):
     start = now - timedelta(minutes=WIND_HIST_MIN)
     rows = as_list(get(API["winds"], "/winds/range", f"date>={stamp(start)}&date<={stamp(now)}&sort=asc"))
-    keep = ("reading_datetime", "tower", "hgt", "lat", "lon", "avg_dir_1min", "avg_spd_1min", "peak_spd_1min", "peak_spd_10min")
-    rows = [{k: r.get(k) for k in keep} for r in rows if r.get("avg_spd_1min") is not None or r.get("peak_spd_1min") is not None]
+    keep = ("reading_datetime", "tower", "hgt", "lat", "lon", "avg_dir_1min", "avg_spd_1min", "peak_spd_1min", "peak_spd_10min", "tmp")
+    rows = [{k: r.get(k) for k in keep} for r in rows
+            if r.get("avg_spd_1min") is not None or r.get("peak_spd_1min") is not None or r.get("tmp") is not None]
     return {"rows": rows, "window_start": start.isoformat()}
 
 
@@ -118,6 +121,30 @@ def winds_max(now, hist_rows, prev):
     return {"rows": rows}
 
 
+def temps_min(now, hist_rows, prev):
+    """Coldest temperature per 5 minutes, per site and sensor height, kept for 24 hours."""
+    points = {r["t"]: r["s"] for r in prev.get("rows", []) if "t" in r}
+    for r in hist_rows:
+        t, v = (r.get("reading_datetime") or "")[:16], r.get("tmp")
+        if not t or v is None or v >= 999 or v <= -100:
+            continue
+        b = t[:14] + "%02d" % (int(t[14:16]) // 5 * 5) + ":00Z"
+        k = site_of(r) + "|" + (str(round(r["hgt"])) if r.get("hgt") is not None else "?")
+        e = points.setdefault(b, {})
+        if k not in e or v < e[k][0]:
+            e[k] = [v, r.get("tower")]
+    cut = (now - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:00Z")
+    return {"rows": [{"t": t, "s": s} for t, s in sorted(points.items()) if t >= cut]}
+
+
+def metar(now):
+    return {"rows": as_list(get(API["avwx"], "/api/data/metar", f"ids={STATIONS}&format=json&hours=3"))}
+
+
+def taf(now):
+    return {"rows": as_list(get(API["avwx"], "/api/data/taf", f"ids={STATIONS}&format=json"))}
+
+
 def efm(now):
     rows = as_list(get(API["efm"], "/lplws_1min/latest"))
     if not rows:
@@ -126,7 +153,7 @@ def efm(now):
 
 
 FEEDS = {"c2g": lambda n: lightning("c2g", n), "c2c": lambda n: lightning("c2c", n),
-         "winds": winds, "winds_hist": winds_hist, "efm": efm}
+         "winds": winds, "winds_hist": winds_hist, "efm": efm, "metar": metar, "taf": taf}
 
 
 def previous():
@@ -159,13 +186,19 @@ def main(out):
                                         "fetched_at": now.isoformat(), "error": None if hist else "No recent tower readings"}
     except Exception as e:
         result["feeds"]["winds_max"] = {**old.get("winds_max", {"rows": []}), "status": "error", "error": str(e)[:300]}
+    try:
+        hist = result["feeds"]["winds_hist"]["rows"] if result["feeds"]["winds_hist"]["status"] == "ok" else []
+        result["feeds"]["temps_min"] = {**temps_min(now, hist, old.get("temps_min", {})), "status": "ok" if hist else "error",
+                                        "fetched_at": now.isoformat(), "error": None if hist else "No recent tower readings"}
+    except Exception as e:
+        result["feeds"]["temps_min"] = {**old.get("temps_min", {"rows": []}), "status": "error", "error": str(e)[:300]}
     os.makedirs(os.path.join(out, "data"), exist_ok=True)
     path = os.path.join(out, "data", "latest.json")
     with open(path + ".tmp", "w") as f:
         json.dump(result, f, separators=(",", ":"), allow_nan=False)
     os.replace(path + ".tmp", path)
     print(json.dumps({k: {"status": v["status"], "rows": len(v["rows"])} for k, v in result["feeds"].items()}))
-    if all(v["status"] == "error" for v in result["feeds"].values()):
+    if all(v["status"] == "error" for k, v in result["feeds"].items() if k not in ("metar", "taf")):
         sys.exit("Every feed failed")
 
 

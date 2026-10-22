@@ -535,7 +535,7 @@ body.wall .stile .sv{font-size:24px}
   <section class="panel mappanel" id="lightPanel">
     <div class="mapbox">
       <canvas id="map" class="mapcv" aria-label="Map of lightning rings, strikes and wind towers"></canvas>
-      <div class="ov ov-tl"><span class="ovt">Lightning</span><span class="meta" id="mapMeta">--</span></div>
+      <div class="ov ov-tl"><span class="ovt">Data viewer</span><span class="meta" id="mapMeta">--</span></div>
       <div class="ov ov-tr">
         <div class="seg" id="segWin"></div>
         <div class="seg" id="segRegion"></div>
@@ -558,7 +558,7 @@ body.wall .stile .sv{font-size:24px}
       <span id="lgMotion"><svg width="18" height="12"><path d="M1 6H14M10 2l4 4-4 4" fill="none" stroke="#fff" stroke-width="1.6"/></svg>Storm motion (15/30 min)</span>
       <span class="hintsm">Click a tower for its winds · click elsewhere to measure</span>
       <span id="lgEFM"><i class="dot" style="background:#3bc98a"></i><i class="dot" style="background:#f0c24a"></i><i class="dot" style="background:#ff5161"></i><span id="lgEFMt">Field mill |E|</span></span>
-      <span id="lgTowers"><svg width="22" height="14" aria-hidden="true"><path d="M3 12L19 3M19 3l-2-6M15.5 5l-1.7-5M12 7l-1-3" fill="none" stroke="#6cb6ff" stroke-width="1.6" stroke-linecap="round" transform="translate(0,3)"/></svg>Wind tower barb (click a tower for details)</span>
+      <span id="lgTowers"><svg width="24" height="14" aria-hidden="true"><path d="M7 7L21 2M21 2l-1-4M17.5 3.3l-1-4" fill="none" stroke="#3bc98a" stroke-width="1.6" stroke-linecap="round" transform="translate(0,4)"/><circle cx="7" cy="9" r="4.5" fill="#3bc98a" stroke="#0b1013" stroke-width="1.2"/></svg>Wind towers (same colors as the wind tower map) · click one for details</span>
     </div>
     </div>
     <div class="layerdock" id="layerDock" aria-label="Lightning plot layers">
@@ -1436,13 +1436,14 @@ function drawLightningLayer(c,w,h,mono){
   if(S.showNames && r0px()>=22) for(const r of RINGS){ const [x,y]=proj(r.lat,r.lon); c.fillStyle="#000a"; const tw=c.measureText(r.name).width; c.fillRect(x-tw/2-3,y-7,tw+6,14); c.fillStyle=r.color; c.fillText(r.name,x,y+4); }
   c.textAlign="left";
   // towers
-  const top={}; if(S.showTowers) for(const r of Object.values(towers)) if(!top[r.tower] || (r.hgt||0)>(top[r.tower].hgt||0)) top[r.tower]=r;
-  for(const t of Object.values(top)){ if(t.lat==null||t.lon==null) continue; const [x,y]=proj(t.lat,t.lon); const L=effLevel(t.key);
-    const col = L==="ok"? "#6cb6ff" : WL[L].col, isSel = selectedSite()===t.tower;
-    if(view.Z>=8.5) drawBarb(c, x, y, t.dir, t.avg, col, view.Z>=10? 26 : 20);
-    const tz=view.Z>=9?5:3; c.fillStyle=col; c.beginPath(); c.moveTo(x,y-tz); c.lineTo(x+tz,y+tz*.8); c.lineTo(x-tz,y+tz*.8); c.closePath(); c.fill();
-    if(isSel){ c.lineWidth=2.5; c.strokeStyle="#fff"; c.beginPath(); c.arc(x,y,10,0,Math.PI*2); c.stroke(); }
-    if(view.Z>=10.5){ c.font="10px "+mono; const tx=`${t.tower} ${fmt(t.avg)}/${fmt(t.pk1)}`; c.fillStyle="#000a"; c.fillRect(x+5,y+3,c.measureText(tx).width+4,12); c.fillStyle="#e3ecf0"; c.fillText(tx, x+7, y+12); } }
+  // towers: same icons as the wind tower map (colored circle + barb, gray = no wind sensor)
+  if(S.showTowers && S.src.winds){ const sel=selectedSite();
+    for(const t of towerSites()){ const [x,y]=proj(t.lat,t.lon); if(x<-40||y<-40||x>w+40||y>h+40) continue;
+      const r=t.top, L=t.level, col = !r? "#9aa8af" : WL[L].col, isSel = sel===t.tower;
+      if(r && view.Z>=8.5) drawBarb(c, x, y, r.dir, r.avg, col, view.Z>=10? 30 : 22);
+      const rad = view.Z>=8.5? (isSel?8:6) : 4; c.beginPath(); c.arc(x,y,rad,0,Math.PI*2); c.fillStyle=col; c.fill(); c.lineWidth=isSel?3:1.5; c.strokeStyle=isSel?"#ffffff":"#0b1013"; c.stroke();
+      if(view.Z>=10.8 || isSel){ c.font=(isSel?"600 ":"")+"11px "+mono; const tx = r? `${t.tower}  ${fmt(r.avg)}/${fmt(r.pk1)}` : t.tower; const tw=c.measureText(tx).width;
+        c.fillStyle= isSel? "#e9a23bee" : "#000b"; c.fillRect(x+9,y-8,tw+8,16); c.fillStyle= isSel? "#1a1206" : "#e3ecf0"; c.fillText(tx,x+13,y+4); } } }
   drawEFM(c);
   // strikes (oldest first)
   const win=S.mapWin*60000; const list=[...strikes.values()].filter(s=>now-s.t<=win && (s.type==="c2g"? S.showCG : S.showCC)).sort((a,b)=>a.t-b.t);
@@ -2501,7 +2502,7 @@ function initX(){ renderTrop(); renderSnd(); renderLaunch(); setTimeout(()=>{ po
 
 /* ===== Customizable card layout (per viewer, saved in this browser) ===== */
 const LAYOUT_KEY="45ws_layout_v1";
-const CARDS={lightPanel:"Lightning map", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log",
+const CARDS={lightPanel:"Data viewer", ringsCard:"Ring status", logCard:"Strike log", tdCard:"Tower detail", tmapCard:"Wind tower map", netCard:"Wind trend", "wp-KSC":"Kennedy towers", "wp-CCSFS":"Cape towers", "wp-OTHER":"Other towers", evPanel:"Event log",
   tempCard:"Tower temperatures", fcCard:"NWS forecast lows", tTrendCard:"Temperature trend", metarCard:"METARs", tafCard:"TAFs", afdCard:"Forecast discussion",
   tropCard:"Active storms", twoCard:"Tropical outlook", skewCard:"Skew-T", sidxCard:"Key levels & indices", launchCard:"Launch schedule"};
 const CARD_TAB={tempCard:"temp", fcCard:"temp", tTrendCard:"temp", metarCard:"admin", tafCard:"admin", afdCard:"afd", tropCard:"trop", twoCard:"trop", skewCard:"snd", sidxCard:"snd", launchCard:"launch"};

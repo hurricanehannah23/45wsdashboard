@@ -242,6 +242,9 @@ body:not(.wall) .dash > section.sized > .obs, body:not(.wall) .dash > section.si
 .afdjump{display:flex;flex-wrap:wrap;gap:4px}
 .afdjump button{font-size:12px}
 .empty{color:var(--muted);font-size:13px;padding:8px 0}
+.qzbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border-top:1px solid var(--line)}
+.qzbar .ldl{margin-right:4px} .qzbar .btn.on{border-color:var(--accent);color:var(--fg);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.qznote{padding:0 12px 10px;color:var(--muted);font-size:12px}
 /* tropical, sounding, launches */
 .storm{border:1px solid var(--line);border-left:5px solid var(--info);border-radius:8px;background:var(--bg);padding:10px 12px;display:grid;gap:8px}
 .storm.warn{border-left-color:var(--warn)} .storm.crit{border-left-color:var(--crit)}
@@ -607,6 +610,8 @@ body.wall .stile .sv{font-size:24px}
         <span>Wind barbs point into the wind · half barb 5 kt · full barb 10 kt · pennant 50 kt (1-min average)</span>
       </div>
     </div>
+    <div class="qzbar" id="qzBar" aria-label="Quick zoom to a site"><span class="ldl">Quick zoom</span></div>
+    <div class="qznote" id="qzNote" hidden></div>
   </section>
   <section class="panel" id="tdCard">
     <div class="ph"><h2 id="tdTitle">Tower detail</h2><span class="meta" id="tdMeta"></span></div>
@@ -1505,6 +1510,21 @@ const TM = makeMap($("#tmap"), { draw: drawTowerLayer, fit: towerBox,
   hover:(x,y)=>{ const t=hitTower(x,y); const k=t?t.tower:null; if(k!==towerHover){ towerHover=k; renderView(TM); } return !!t; },
   click:(x,y)=>{ const t=hitTower(x,y); if(!t) return; selectTower(t.tower); if(window.innerWidth<900) $("#tdTitle").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); } });
 function renderTowerMap(){ renderView(TM); }
+/* Quick zoom to the launch complexes and airfields */
+const QUICK = [["CX-36 · Blue Origin",["0003"]], ["CX-39A · SpaceX",["0393"]], ["CX-39B · NASA",["0397"]], ["CX-40 · SpaceX",["0110"]], ["CX-41 · ULA",["0110"]],
+               ["VAB",["0509"]], ["KXMR",["0303"]], ["KTTS",["0511","0512","0513"]]];
+const sameTower = (a,b) => String(a).replace(/^0+/,"")===String(b).replace(/^0+/,"");
+function quickZoom(i, btn){ const [name,ids]=QUICK[i], ts=towerSites().filter(t=>ids.some(id=>sameTower(t.tower,id))), note=$("#qzNote");
+  document.querySelectorAll("#qzBar .btn").forEach(b=>b.classList.toggle("on", b===btn));
+  const missing=ids.filter(id=>!ts.some(t=>sameTower(t.tower,id)));
+  note.hidden=!missing.length; note.textContent = missing.length? `Tower${missing.length>1?"s":""} ${missing.join(", ")} ${missing.length>1?"aren't":"isn't"} reporting a location right now.` : "";
+  if(!ts.length) return;
+  use(TM); if(!view){ fitBox(TM.fit()); }
+  if(ts.length===1) view={u:U(ts[0].lon), v:V(ts[0].lat), Z:13};
+  else { const pad=0.006; fitBox({latMin:Math.min(...ts.map(t=>t.lat))-pad, latMax:Math.max(...ts.map(t=>t.lat))+pad, lonMin:Math.min(...ts.map(t=>t.lon))-pad, lonMax:Math.max(...ts.map(t=>t.lon))+pad}, 0.15); view.Z=Math.min(view.Z,13.5); }
+  TM.view=view; selectTower(ts[0].tower); renderTowerMap(); }
+QUICK.forEach(([name,ids],i)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn sm"; b.textContent=name; b.title=`Zoom to tower${ids.length>1?"s":""} ${ids.join(", ")}`; b.onclick=()=>quickZoom(i,b); $("#qzBar").appendChild(b); });
+$("#btnTFit").addEventListener("click",()=>{ document.querySelectorAll("#qzBar .btn").forEach(b=>b.classList.remove("on")); $("#qzNote").hidden=true; });
 const selectedSite = () => S.tower ? String(S.tower).split("@")[0] : null;
 async function selectTower(name, opts={}){ const t=towerSites().find(x=>x.tower===name); const k = t&&t.top ? t.top.key : Object.values(towers).find(r=>r.tower===name)?.key;
   S.tower = k || name; save(); renderTowerDetail(); renderWinds(); if(opts.center && t){ use(TM); if(view){ view.u=U(t.lon); view.v=V(t.lat); view.Z=Math.max(view.Z,11.5); TM.view=view; } renderTowerMap(); }

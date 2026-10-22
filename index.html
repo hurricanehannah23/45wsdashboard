@@ -242,6 +242,7 @@ body:not(.wall) .dash > section.sized > .obs, body:not(.wall) .dash > section.si
 .afdjump{display:flex;flex-wrap:wrap;gap:4px}
 .afdjump button{font-size:12px}
 .empty{color:var(--muted);font-size:13px;padding:8px 0}
+.windTable th,.windTable td{padding:6px 6px} .windTable th{font-size:10.5px;letter-spacing:.05em} .windTable td{font-size:12.5px}
 .qzbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border-top:1px solid var(--line)}
 .qzbar .ldl{margin-right:4px} .qzbar .btn.on{border-color:var(--accent);color:var(--fg);background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .qznote{padding:0 12px 10px;color:var(--muted);font-size:12px}
@@ -625,15 +626,15 @@ body.wall .stile .sv{font-size:24px}
 
   <section class="panel" id="wp-KSC">
     <div class="ph"><h2>Kennedy towers</h2><span class="lvl" id="wl-KSC" hidden></span><span class="meta" id="wm-KSC">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="KSC"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="KSC"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Temp °F</th><th data-k="dp">Dew pt</th><th data-k="rh">RH %</th><th data-k="dif" title="Temperature difference between the tower's sensor levels (from the feed, e.g. 6 ft vs 54 ft)">ΔT °F</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section class="panel" id="wp-CCSFS">
     <div class="ph"><h2>Cape towers</h2><span class="lvl" id="wl-CCSFS" hidden></span><span class="meta" id="wm-CCSFS">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="CCSFS"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="CCSFS"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Temp °F</th><th data-k="dp">Dew pt</th><th data-k="rh">RH %</th><th data-k="dif" title="Temperature difference between the tower's sensor levels (from the feed, e.g. 6 ft vs 54 ft)">ΔT °F</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section class="panel" id="wp-OTHER" hidden>
     <div class="ph"><h2>Other towers</h2><span class="lvl" id="wl-OTHER" hidden></span><span class="meta" id="wm-OTHER">--</span></div>
-    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="OTHER"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Tmp</th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap" style="max-height:440px"><table class="windTable" data-site="OTHER"><thead><tr><th data-k="tower">Tower</th><th data-k="hgt">Hgt (ft)</th><th data-k="t">Time</th><th data-k="dir">Dir</th><th data-k="avg">Avg</th><th data-k="pk1">Pk 1m</th><th data-k="pk10">Pk 10m</th><th data-k="tmp">Temp °F</th><th data-k="dp">Dew pt</th><th data-k="rh">RH %</th><th data-k="dif" title="Temperature difference between the tower's sensor levels (from the feed, e.g. 6 ft vs 54 ft)">ΔT °F</th></tr></thead><tbody></tbody></table></div>
   </section>
 
   <section class="panel" id="netCard">
@@ -1147,7 +1148,7 @@ async function pollWindSeries(key, hrs){
 let latestAll = [];
 function absorbWinds(list){ latestAll = list.map(r=>(r.key=keyOf(r),r)); for(const r of latestAll){ pushHist(r); netAdd(r); } for(const r of list){ if(!hasWind(r)) continue; r.key = keyOf(r); const cur = towers[r.key]; if(!cur || (r.t||0) >= (cur.t||0)) towers[r.key] = r; }
   // borrow temperature from a sensor-only level of the same tower when the wind level has none
-  for(const r of list){ if(hasWind(r) || r.tmp==null) continue; for(const w of Object.values(towers)) if(w.tower===r.tower && w.tmp==null) w.tmp=r.tmp; }
+  for(const r of list){ if(hasWind(r)) continue; for(const w of Object.values(towers)) if(w.tower===r.tower) for(const k of ["tmp","dp","rh","dif"]) if(w[k]==null && r[k]!=null){ w[k]=r[k]; w[k+"_h"]=r.hgt; } }
   checkWindAlerts(); tempAbsorb(list); }
 const WL = { ok:{name:"Below threshold", tag:"BELOW", col:"#3bc98a"}, watch:{name:"Sustained Advisory", tag:"ADVISORY", col:"#f0c24a"},
   strong:{name:"Warning – Strong", tag:"WARN · STRONG", col:"#ff8a3d"}, damaging:{name:"Warning – Damaging", tag:"WARN · DAMAGING", col:"#ff5161"} };
@@ -1185,7 +1186,7 @@ function checkWindAlerts(){ const now = Date.now();
 const demo = (()=>{ let cell = {lat:28.66, lon:-80.95, vlat:-0.0016, vlon:0.0042}, n=0, t0=Date.now();
   const tw = RINGS.slice(0,10).map((r,i)=>({id:String(i+1).padStart(4,"0"), lat:r.lat+0.01, lon:r.lon-0.01, base:8+i*1.6, hgt:[54,54,90,162,54,204,54,54,492,54][i]}));
   const hist = {};
-  function windAt(w,t){ const k=(t-t0)/60000, b=w.base+6*Math.sin(k/22+w.base)+3*Math.sin(k/5.3); const avg=Math.max(0,b+Math.random()*2); return {tower:w.id,t,dir:(200+40*Math.sin(k/40+w.base)+360)%360,avg,pk1:avg*(1.25+Math.random()*.25),pk10:avg*1.6,tmp:33.5+(w.base-8)*0.9+3.2*Math.sin(k/70+w.base),hgt:w.hgt,lat:w.lat,lon:w.lon}; }
+  function windAt(w,t){ const k=(t-t0)/60000, b=w.base+6*Math.sin(k/22+w.base)+3*Math.sin(k/5.3); const avg=Math.max(0,b+Math.random()*2); return {tower:w.id,t,dir:(200+40*Math.sin(k/40+w.base)+360)%360,avg,pk1:avg*(1.25+Math.random()*.25),pk10:avg*1.6,tmp:33.5+(w.base-8)*0.9+3.2*Math.sin(k/70+w.base),dp:27+(w.base-8)*0.5,rh:70+8*Math.sin(k/50+w.base),dif:Math.round((1.2*Math.sin(k/80+w.base)-0.3)*10)/10,hgt:w.hgt,lat:w.lat,lon:w.lon}; }
   return {
     strikes(type){ const out=[]; cell.lat+=cell.vlat; cell.lon+=cell.vlon; if(cell.lon>-80.35){cell.lon=-80.95;cell.lat=28.4+Math.random()*.4;}
       const k = type==="c2g"? 2+Math.floor(Math.random()*3) : 4+Math.floor(Math.random()*6);
@@ -1541,8 +1542,8 @@ function renderTowerDetail(){ const name=selectedSite(), box=$("#tdBody"), u=S.u
   const any=rows[0], site=({KSC:"Kennedy",CCSFS:"Cape",OTHER:"Other"})[siteOf(any)], L=t?t.level:"ok";
   $("#tdTitle").textContent=`Tower ${name}`; $("#tdMeta").innerHTML=`${site} · ${Number.isFinite(any.t)?hhmmZ(any.t):"—"} <span class="pill ${L}" style="min-width:0;margin-left:6px">${WL[L].tag}</span>`;
   const wr=rows.filter(hasWind);
-  const first=(k)=>{ const r=rows.find(r=>r[k]!=null); return r? [r[k], r.hgt] : null; };
-  const met=[["Temperature","tmp","°F",1],["Dew point","dp","°F",1],["Rel. humidity","rh","%",0],["Temp diff 6–54 ft","dif","°F",1],["Pressure","pre","",1],["Rain rate","rainrate","",2],["Rain last hour","rainhr","",2],["Soil temp","sltemp","°F",1],["Soil moisture","slmoist","",1]]
+  const first=(k)=>{ const r=rows.find(r=>r[k]!=null && r[k+"_h"]===undefined) || rows.find(r=>r[k]!=null); return r? [r[k], r[k+"_h"]!==undefined? r[k+"_h"] : r.hgt] : null; };
+  const met=[["Temperature","tmp","°F",1],["Dew point","dp","°F",1],["Rel. humidity","rh","%",0],["ΔT (temp difference)","dif","°F",1],["Pressure","pre","",1],["Rain rate","rainrate","",2],["Rain last hour","rainhr","",2],["Soil temp","sltemp","°F",1],["Soil moisture","slmoist","",1]]
     .map(([lab,k,un,d])=>{ const f=first(k); return f? `<div class="kv"><span>${lab}</span><b class="mono">${f[0].toFixed(d)}${un}</b><i>${f[1]!=null?Math.round(f[1])+" ft":""}</i></div>` : ""; }).join("");
   box.innerHTML = `
     ${wr.length? `<div class="tablewrap"><table class="td"><thead><tr><th>Hgt</th><th>Dir</th><th>Avg</th><th>Pk 1m</th><th>Pk dir</th><th>Pk 10m</th><th>Dev</th></tr></thead><tbody>
@@ -1581,8 +1582,8 @@ function renderWinds(){ const u=S.units; const all=Object.values(towers);
     const tb=document.querySelector(`.windTable[data-site="${site}"] tbody`);
     tb.innerHTML = rows.length? rows.map(r=>`<tr data-t="${esc(r.key)}" class="${r.key===S.tower?"sel":""}"><td>${esc(r.tower)}${watched(r.key)?"":' <span style="color:var(--dim)" title="Not on the alert list">·</span>'}</td><td>${fmt(r.hgt)}</td><td>${Number.isFinite(r.t)?hhmmZ(r.t):"—"}</td>
        <td>${r.dir==null?"—":`<span class="dirarrow" style="transform:rotate(${r.dir+180}deg)">↑</span>${String(Math.round(r.dir)).padStart(3,"0")}° ${comp(r.dir)}`}</td>
-       <td class="${cellL(r.avg,"avg")}">${fmt(r.avg,1)}</td><td class="${cellL(r.pk1,"pk")}">${fmt(r.pk1,1)}</td><td>${fmt(r.pk10,1)}</td><td>${fmt(r.tmp,1)}</td></tr>`).join("")
-      : `<tr><td colspan="8" class="empty" style="font-family:var(--f-ui)">${!S.src.winds ? "Winds feed is off." : all.length? `No ${label} towers reporting.` : "Waiting for tower readings."}</td></tr>`;
+       <td class="${cellL(r.avg,"avg")}">${fmt(r.avg,1)}</td><td class="${cellL(r.pk1,"pk")}">${fmt(r.pk1,1)}</td><td>${fmt(r.pk10,1)}</td><td>${fmt(r.tmp,1)}</td><td>${fmt(r.dp,1)}</td><td>${fmt(r.rh,0)}</td><td>${r.dif==null?"—":(r.dif>0?"+":"")+fmt(r.dif,1)}</td></tr>`).join("")
+      : `<tr><td colspan="11" class="empty" style="font-family:var(--f-ui)">${!S.src.winds ? "Winds feed is off." : all.length? `No ${label} towers reporting.` : "Waiting for tower readings."}</td></tr>`;
     tb.querySelectorAll("tr[data-t]").forEach(tr=>tr.onclick=async()=>{ S.tower=tr.dataset.t; save(); renderWinds(); const t=towerSites().find(x=>x.tower===tr.dataset.t.split("@")[0]); if(t){ use(TM); if(view){ view.u=U(t.lon); view.v=V(t.lat); TM.view=view; } renderTowerMap(); } await refreshSeries(); renderChart(); });
     const newest = rows.reduce((m,r)=>Number.isFinite(r.t)?Math.max(m,r.t):m,0);
     const maxPk = rows.reduce((m,r)=>r.pk1!=null&&r.pk1>m.v?{v:r.pk1,t:tLabel(r.key)}:m,{v:-1,t:""});

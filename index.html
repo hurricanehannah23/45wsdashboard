@@ -395,6 +395,7 @@ td{border-bottom-color:var(--line)}
 .rings{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:10px}
 .rtile{position:relative;display:grid;gap:5px;padding:10px 10px 9px 13px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);min-width:0}
 .rtile::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--rc)}
+.rtile .rpause{font-size:11px;color:var(--muted);font-weight:600}
 .rtile .rrow{display:flex;align-items:baseline;gap:8px;min-width:0;flex-wrap:wrap}
 .rtile .rn{font-weight:600;font-size:13px;line-height:1.2;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rtile .rs2{align-self:center;font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 6px;border-radius:3px;color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);flex:none}
@@ -773,7 +774,7 @@ body.wall .stile .sv{font-size:24px}
         <div class="fr"><label for="s_efmHigh">Field mill alert (V/m)</label><input type="number" id="s_efmHigh" min="100" step="50"></div>
         <div class="fr"><label></label><div><label class="chk"><input type="checkbox" id="s_aEFM">Alert when a field mill reaches the alert level</label></div></div>
         <div class="fr"><label>Storm approach</label><div><label class="chk"><input type="checkbox" id="s_etaOn">Alert when a storm is heading for a ring</label></div></div>
-        <div class="fr"><label for="s_etaMin">Alert when ETA is within (min)</label><input type="number" id="s_etaMin" min="5" max="60" step="5"></div>
+        <div class="fr"><label for="s_etaMin">Alert when the storm is this many minutes from the ring's edge</label><input type="number" id="s_etaMin" min="5" max="60" step="5"></div>
         <div class="fr"><label for="s_ringfile">Load ring file</label><input type="file" id="s_ringfile" accept=".txt,.pl,.plc,text/plain"></div>
         <div class="hint">Ring hold time is how long a ring stays active after its last strike; the countdown shows time to all-clear.</div>
       </fieldset>
@@ -843,7 +844,7 @@ const DEFAULTS = {
   wthr: { pk:{watch:null, strong:35, damaging:50}, avg:{watch:18, strong:null, damaging:null} },
   sound: true, notif: true, vib: true,
   src: {c2g:true, c2c:true, winds:true, efm:true}, showCG: true, showCC: true, showRings: true, showNames: true, showTowers: true, showWarn: true, nwsNm: 100, staleL: 3, staleW: 5, op: "", logFilter: "all",
-  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 15, radarOn: true, radar: "mlb", radarOp: 70, radarMin: 15, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, netShow: {ksc:true, ccsfs:true, sus:true, pk:true}, tower: "", region: "rings", base: "sat"
+  wrule: { watch:{n:3,min:15}, strong:{n:1,min:15}, damaging:{n:1,min:15} }, showMotion: true, etaOn: true, etaMin: 30, radarOn: true, radar: "mlb", radarOp: 70, radarMin: 15, mapWin: 30, hrs: 3, netHrs: 3, netLvl: "all", netSmooth: 10, netShow: {ksc:true, ccsfs:true, sus:true, pk:true}, tower: "", region: "rings", base: "sat"
 };
 const LS = "capeLW.v1", TEAMK = LS+".team";
 // Settings layers: built-in defaults < team defaults (settings.json beside the page) < this browser's own changes
@@ -973,7 +974,17 @@ const alerts = []; // {key, kind, level, title, detail, t, fresh}
 function beep(pattern){ if(!S.sound || !audioCtx) return; const t0 = audioCtx.currentTime;
   pattern.forEach(([f,st,du])=>{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type="square"; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t0+st); g.gain.exponentialRampToValueAtTime(0.18,t0+st+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t0+st+du); o.connect(g).connect(audioCtx.destination); o.start(t0+st); o.stop(t0+st+du+0.02); }); }
 const TONE = { clear:[[660,0,.12],[990,.16,.22]], lightning:[[1320,0,.14],[1320,.2,.14],[1320,.4,.14],[1760,.6,.3]], crit:[[880,0,.25],[660,.3,.25],[880,.6,.25],[660,.9,.25]], warn:[[740,0,.2],[740,.3,.2]], near:[[990,0,.15]] };
+/* Acknowledged rings: no more alerts for a ring while its all-clear countdown runs */
+const ackHold = {};   // ring name -> {at, last}
+const RING_KEY = /^(ring|near|eta):(.+)$/;
+function ringHeld(n){ const h=ackHold[n]; if(!h) return false; const st=(typeof rw!=="undefined" && rw[n]) || {};
+  if(st.on) return true;                                   // ring active: hold until its all-clear
+  if(Date.now()-Math.max(h.at,h.last||0) > S.window*60000){ delete ackHold[n]; return false; }   // nearby/approaching only: hold one hold-time after the last of it
+  return true; }
+function noteAck(a){ const m=String(a.key||"").match(RING_KEY); if(m){ ackHold[m[2]]={at:Date.now(), last:0};
+    for(const k of ["ring:","near:","eta:"]){ const x=alerts.find(z=>z.key===k+m[2] && z!==a); if(x) alerts.splice(alerts.indexOf(x),1); } } }
 function raise({key, kind, level, title, detail, group}){
+  { const m=String(key||"").match(RING_KEY); if(m && ringHeld(m[2])){ ackHold[m[2]].last=Date.now(); if(typeof renderRings==="function") setTimeout(renderRings,0); return; } }
   group = group || (kind==='lightning'||kind==='near' ? 'lightning' : 'other');
   const now = Date.now();
   let a = alerts.find(x=>x.key===key);
@@ -1000,10 +1011,10 @@ function renderAlerts(){ const box=$("#alerts"); box.innerHTML=""; renderBell();
   for(const [g,name,sub] of AGROUPS){ const list=alerts.filter(a=>a.group===g); if(!list.length) continue;
     const col=document.createElement("div"); col.className="agroup";
     col.innerHTML=`<div class="agh">${name}<span class="n">${list.length}</span>${sub?`<span class="sub">${sub()}</span>`:""}${list.length>1?'<button class="btn">Ack all</button>':""}</div>`;
-    const ab=col.querySelector(".agh button"); if(ab) ab.onclick=()=>{ for(const x of list) alerts.splice(alerts.indexOf(x),1); logEvent(alertCat(list[0]), "Acknowledged", `${list.length} ${name.toLowerCase()} alerts`, list.map(x=>x.title).slice(0,6).join("; "), opName()); renderAlerts(); };
+    const ab=col.querySelector(".agh button"); if(ab) ab.onclick=()=>{ for(const x of list){ alerts.splice(alerts.indexOf(x),1); noteAck(x); } logEvent(alertCat(list[0]), "Acknowledged", `${list.length} ${name.toLowerCase()} alerts`, list.map(x=>x.title).slice(0,6).join("; "), opName()); renderAlerts(); };
     for(const a of list){ const d=document.createElement("div"); d.className=`alert ${a.kind} ${a.level}${a.fresh?" fresh":""}`; a.fresh=false;
       d.innerHTML=`<span class="k">${a.kind==="lightning"?"Lightning":a.kind==="clear"?"All clear":a.kind==="eta"?"Storm approaching":a.kind==="efm"?"Field mill":a.kind==="near"?"Nearby":a.kind==="nws"?"NWS":a.kind==="stale"?"System":a.kind==="temp"?"Temperature":a.kind==="coldnws"?"NWS cold":a.group==="agl"?"Above ground":a.group==="sfc"?"Surface":"Wind"} · ${hhmmssZ(a.t)}Z</span><div><div class="t">${esc(a.title)}</div><div class="d">${esc(a.detail)}</div></div><button class="btn" aria-label="Acknowledge">Ack</button>`;
-      d.querySelector("button").onclick=()=>{ alerts.splice(alerts.indexOf(a),1); logEvent(alertCat(a), "Acknowledged", a.title, a.detail, opName()); renderAlerts(); }; col.appendChild(d); }
+      d.querySelector("button").onclick=()=>{ alerts.splice(alerts.indexOf(a),1); noteAck(a); logEvent(alertCat(a), "Acknowledged", a.title, a.detail, opName()); renderAlerts(); }; col.appendChild(d); }
     box.appendChild(col); }
 }
 $("#btnArm").onclick = async ()=>{
@@ -1280,6 +1291,7 @@ function renderRings(){ const now=Date.now(), W=S.window*60000; let nActive=0;
     else if(!count && st.on){ const n=[...strikes.values()].filter(s=>s.inR.includes(r.name)&&s.t>=st.start).length, dur=Math.round((st.last-st.start)/60000);
       logEvent("lightning","All clear",r.name,`No strikes for ${S.window} min. Last strike ${hhmmssZ(st.last)}Z; ${n} strike${n===1?"":"s"}${dur>=1?` over ${dur} min`:""}`);
       for(const key of ["ring:"+r.name,"near:"+r.name]){ const x=alerts.find(a=>a.key===key); if(x) alerts.splice(alerts.indexOf(x),1); }
+      delete ackHold[r.name];
       if(!off) raise({key:"clear:"+r.name, kind:"clear", group:"lightning", level:"ok", title:`All clear: ${r.name}`, detail:`No strikes in ${S.window} min. Last strike ${hhmmssZ(st.last)}Z.`});
       st.on=false; }
     if(count){ st.last=last; if(!st.start) st.start=first; }
@@ -1290,7 +1302,7 @@ function renderRings(){ const now=Date.now(), W=S.window*60000; let nActive=0;
     d.innerHTML = `<div class="rn">${esc(r.name)}</div>
       <div class="rrow"><span class="rs2">${count? "LIGHTNING" : nearCount? "NEARBY" : "CLEAR"}</span>${etaS? `<span class="eta" title="Estimated time until the approaching storm reaches this ring">ETA ${etaS}</span>` : ""}${count? `<span class="rbig">${mmss(last+W-now)}<small>to all clear</small></span>` : nearCount? `<span class="rbig">${nearCount}<small>within ${S.buffer} NM</small></span>` : ""}</div>
       <div title="Strikes per 5 min over the last hour (red: in ring, yellow: nearby)">${sparkSVG(bins,nb).replace('class="spark"','class="spark" preserveAspectRatio="none"')}</div>
-      <div class="rsub">${count? `${count} in ring · first ${hhmmZ(st.start||first)} · last ${hhmmssZ(last)}Z` : nearCount? `Last nearby ${hhmmssZ(nearLast)}Z` : `${r.r_nm.toFixed(1)} NM · ${S.window}-min hold${off?" · muted":""}`}</div>`;
+      <div class="rsub">${count? `${count} in ring · first ${hhmmZ(st.start||first)} · last ${hhmmssZ(last)}Z` : nearCount? `Last nearby ${hhmmssZ(nearLast)}Z` : `${r.r_nm.toFixed(1)} NM · ${S.window}-min hold${off?" · muted":""}`}</div>${ringHeld(r.name)? `<div class="rpause" title="Acknowledged: no more alerts for this ring until it goes all clear">Acknowledged · alerts paused</div>` : ""}`;
     box.appendChild(d); }
   if(!nActive && !reset) for(const key of ["start:c2g","start:c2c"]){ const x=alerts.find(a=>a.key===key); if(x){ alerts.splice(alerts.indexOf(x),1); renderAlerts(); } }
   $("#ringMeta").textContent = `${nActive} of ${RINGS.length} active · ${S.window}-min hold`;
@@ -1937,8 +1949,8 @@ function computeStorms(){ const now=Date.now(); storm.at=now; storm.cells=[]; co
     const prev=storm.alerted[ring.name];
     if(active){ const x=alerts.find(a=>a.key==="eta:"+ring.name); if(x){ alerts.splice(alerts.indexOf(x),1); renderAlerts(); } delete storm.alerted[ring.name]; continue; }
     if(e && e.min<=S.etaMin){ if(!prev && S.etaOn && !S.ringOff.includes(ring.name)){ const m=Math.max(1,Math.round(e.min));
-        raise({key:"eta:"+ring.name, kind:"eta", group:"lightning", level:"strong", title:`Storm approaching ${ring.name}`, detail:`ETA about ${m} min. Cell moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt, ${e.cell.n} strikes in the last 25 min.`});
-        logEvent("lightning","Storm approaching",ring.name,`ETA about ${m} min; moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt`); }
+        raise({key:"eta:"+ring.name, kind:"eta", group:"lightning", level:"strong", title:`Storm approaching ${ring.name}`, detail:`Lightning reaches the edge of the ring in about ${m} min. Cell moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt, ${e.cell.n} strikes in the last 25 min.`});
+        logEvent("lightning","Storm approaching",ring.name,`Lightning reaches the ring edge in about ${m} min; moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt`); }
       storm.alerted[ring.name]=now; }
     else if(prev && now-prev>10*60000) delete storm.alerted[ring.name]; } }
 const etaText = name => { const e=storm.eta[name]; if(!e) return ""; return e.min<1? "arriving" : `~${Math.round(e.min)} min`; };
@@ -1961,22 +1973,29 @@ setInterval(()=>{ computeStorms(); }, 20000);
 let measure=null;
 function brg(la1,lo1,la2,lo2){ const t=Math.PI/180, y=Math.sin((lo2-lo1)*t)*Math.cos(la2*t), x=Math.cos(la1*t)*Math.sin(la2*t)-Math.sin(la1*t)*Math.cos(la2*t)*Math.cos((lo2-lo1)*t); return (Math.atan2(y,x)/t+360)%360; }
 const deg3 = b => String(Math.round(b)%360).padStart(3,"0")+"°";
-function ringEdgeNm(r,lat,lon){ let d=Infinity; for(const [la,lo] of r.pts) d=Math.min(d, hav(la,lo,lat,lon)); return d; }
+// nearest point on a ring's outline (flat-earth over a few NM is plenty accurate); 0 when the point is inside
+function ringEdge(r,lat,lon){ const k=Math.cos(lat*Math.PI/180), P=r.pts; let best={d:Infinity,lat:r.lat,lon:r.lon};
+  for(let i=0;i<P.length;i++){ const [la1,lo1]=P[i], [la2,lo2]=P[(i+1)%P.length];
+    const ax=(lo1-lon)*k, ay=la1-lat, bx=(lo2-lon)*k, by=la2-lat, dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy;
+    const t=L? Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L)) : 0, qla=la1+(la2-la1)*t, qlo=lo1+(lo2-lo1)*t, d=hav(qla,qlo,lat,lon);
+    if(d<best.d) best={d,lat:qla,lon:qlo}; }
+  if(inPoly(lat,lon,P)) best.d=0; return best; }
+const ringEdgeNm = (r,lat,lon) => ringEdge(r,lat,lon).d;
 function renderMeasure(){ const el=$("#measure"); if(!measure){ if(towerCard) renderTowerCard(); else el.hidden=true; return; } el.hidden=false; const {lat,lon}=measure, now=Date.now();
-  const rings=RINGS.map(r=>({r, d:hav(r.lat,r.lon,lat,lon), b:brg(r.lat,r.lon,lat,lon), inside:inPoly(lat,lon,r.pts)})).sort((a,b)=>a.d-b.d);
+  const rings=RINGS.map(r=>({r, d:ringEdgeNm(r,lat,lon), b:brg(r.lat,r.lon,lat,lon), inside:inPoly(lat,lon,r.pts)})).sort((a,b)=>a.d-b.d);
   const tw=towerSites().map(t=>({t, d:hav(t.lat,t.lon,lat,lon), b:brg(t.lat,t.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0];
   const st=[...strikes.values()].filter(s=>now-s.t<=S.mapWin*60000).map(s=>({s,d:hav(s.lat,s.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0];
   el.innerHTML=`<div class="mh"><b>Point</b><span>${Math.abs(lat).toFixed(3)}°${lat>=0?"N":"S"} ${Math.abs(lon).toFixed(3)}°${lon>=0?"E":"W"}</span><button type="button" class="ibtn sm" id="measureX" aria-label="Clear measurement">✕</button></div>
-    ${rings.slice(0,5).map(x=>`<div class="mr${x.inside?" in":""}"><span class="n">${esc(x.r.name)}</span><span class="d">${x.d.toFixed(1)} NM</span><span class="b">${deg3(x.b)}</span></div>`).join("")}
-    <div class="note">${rings[0].inside? `Inside ${esc(rings[0].r.name)}` : `${ringEdgeNm(rings[0].r,lat,lon).toFixed(1)} NM outside the ${esc(rings[0].r.name)} ring`} · bearings are from each ring's center to the point</div>
+    ${rings.slice(0,5).map(x=>`<div class="mr${x.inside?" in":""}"><span class="n">${esc(x.r.name)}</span><span class="d">${x.inside? "inside" : x.d.toFixed(1)+" NM"}</span><span class="b">${deg3(x.b)}</span></div>`).join("")}
+    <div class="note">${rings[0].inside? `Inside ${esc(rings[0].r.name)}${rings.filter(x=>x.inside).length>1? ` and ${rings.filter(x=>x.inside).length-1} more` : ""}` : `${rings[0].d.toFixed(1)} NM outside the ${esc(rings[0].r.name)} ring`} · distances are to the edge of each ring · bearings from each ring's center</div>
     ${(()=>{ const m=efmRows.map(r=>({r,d:hav(r.lat,r.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0]; return m? `<div class="mr"><span class="n">Nearest field mill ${m.r.name} (${Math.round(m.r.value)} V/m)</span><span class="d">${m.d.toFixed(1)} NM</span><span class="b">${deg3(brg(m.r.lat,m.r.lon,lat,lon))}</span></div>` : ""; })()}
     ${tw? `<div class="mr"><span class="n">Nearest tower ${esc(tw.t.tower)}</span><span class="d">${tw.d.toFixed(1)} NM</span><span class="b">${deg3(tw.b)}</span></div>`:""}
     ${st? `<div class="mr"><span class="n">Nearest strike (${st.s.type==="c2g"?"CG":"CC"}, ${ago(now-st.s.t)} ago)</span><span class="d">${st.d.toFixed(1)} NM</span><span class="b">${deg3(brg(lat,lon,st.s.lat,st.s.lon))}</span></div>`:""}`;
   $("#measureX").onclick=()=>{ measure=null; renderMeasure(); renderMap(); }; }
 function drawMeasure(c){ if(!measure) return; const [x,y]=proj(measure.lat,measure.lon);
-  const near=RINGS.slice().sort((a,b)=>hav(a.lat,a.lon,measure.lat,measure.lon)-hav(b.lat,b.lon,measure.lat,measure.lon))[0];
-  if(near){ const [rx,ry]=proj(near.lat,near.lon); c.setLineDash([5,4]); c.strokeStyle="#000a"; c.lineWidth=3.5; c.beginPath(); c.moveTo(rx,ry); c.lineTo(x,y); c.stroke(); c.strokeStyle="#e9a23b"; c.lineWidth=1.8; c.stroke(); c.setLineDash([]);
-    const d=hav(near.lat,near.lon,measure.lat,measure.lon), mx=(rx+x)/2, my=(ry+y)/2, lab=`${d.toFixed(1)} NM ${deg3(brg(near.lat,near.lon,measure.lat,measure.lon))}`;
+  const near=RINGS.map(r=>({r, e:ringEdge(r,measure.lat,measure.lon)})).filter(x=>x.e.d>0).sort((a,b)=>a.e.d-b.e.d)[0];
+  if(near){ const [rx,ry]=proj(near.e.lat,near.e.lon); c.setLineDash([5,4]); c.strokeStyle="#000a"; c.lineWidth=3.5; c.beginPath(); c.moveTo(rx,ry); c.lineTo(x,y); c.stroke(); c.strokeStyle="#e9a23b"; c.lineWidth=1.8; c.stroke(); c.setLineDash([]);
+    const d=near.e.d, mx=(rx+x)/2, my=(ry+y)/2, lab=`${d.toFixed(1)} NM to ${near.r.name} edge`;
     c.font="600 11px "+getComputedStyle(document.body).getPropertyValue("--f-mono"); const tw=c.measureText(lab).width; c.fillStyle="#000c"; c.fillRect(mx-tw/2-4,my-9,tw+8,16); c.fillStyle="#e9a23b"; c.textAlign="center"; c.fillText(lab,mx,my+3); c.textAlign="left"; }
   c.strokeStyle="#000"; c.lineWidth=4; c.beginPath(); c.arc(x,y,7,0,Math.PI*2); c.moveTo(x-12,y); c.lineTo(x+12,y); c.moveTo(x,y-12); c.lineTo(x,y+12); c.stroke();
   c.strokeStyle="#e9a23b"; c.lineWidth=2; c.stroke(); }
@@ -2036,10 +2055,10 @@ function showToast(a){ toastAlert=a; const t=$("#toast"); t.hidden=false;
 function hideToast(){ $("#toast").hidden=true; toastAlert=null; }
 $("#toastView").onclick=()=>{ hideToast(); openDrawer(true); };
 $("#toastX").onclick=hideToast;
-$("#toastAck").onclick=()=>{ const a=toastAlert; hideToast(); if(a && alerts.includes(a)){ alerts.splice(alerts.indexOf(a),1); logEvent(alertCat(a),"Acknowledged",a.title,a.detail,opName()); renderAlerts(); } };
+$("#toastAck").onclick=()=>{ const a=toastAlert; hideToast(); if(a && alerts.includes(a)){ alerts.splice(alerts.indexOf(a),1); noteAck(a); logEvent(alertCat(a),"Acknowledged",a.title,a.detail,opName()); renderAlerts(); } };
 $("#btnBell").onclick=()=>openDrawer($("#drawer").hidden);
 $("#btnDrawerClose").onclick=()=>openDrawer(false);
-$("#btnAckAll").onclick=()=>{ if(!alerts.length) return; logEvent("system","Acknowledged",`All ${alerts.length} alerts`, alerts.map(x=>x.title).slice(0,8).join("; "), opName()); alerts.length=0; renderAlerts(); };
+$("#btnAckAll").onclick=()=>{ if(!alerts.length) return; logEvent("system","Acknowledged",`All ${alerts.length} alerts`, alerts.map(x=>x.title).slice(0,8).join("; "), opName()); for(const x of alerts) noteAck(x); alerts.length=0; renderAlerts(); };
 const LAYER_KEYS = ["showCG","showCC","showRings","showNames","showMotion","showTowers","showWarn","showEFM"];
 function setAllLayers(on){ for(const k of LAYER_KEYS) S[k]=on; S.radarOn = on && !IN_CLAUDE; if(!S.radarOn && loopSt.on) stopLoop();
   save(); renderLayerBar(); renderWarnList(); renderMap(); }

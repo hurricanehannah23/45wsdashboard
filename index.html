@@ -652,7 +652,7 @@ body.wall .stile .sv{font-size:24px}
   </section>
 
   <section class="panel" id="logCard">
-    <div class="ph"><h2>Strike log · in or near rings</h2><span class="meta" id="logMeta">--</span></div>
+    <div class="ph"><h2>Strike log · in rings</h2><span class="meta" id="logMeta">--</span></div>
     <div class="tablewrap" style="max-height:340px"><table id="logTable"><thead><tr>
       <th>Time (Z)</th><th>Age</th><th>Type</th><th>Ring(s)</th><th>Lat</th><th>Lon</th><th>Signal</th>
     </tr></thead><tbody></tbody></table></div>
@@ -843,7 +843,7 @@ const DEFAULTS = {
   winds: viaProxy ? "/api/winds" : "https://codiapi-winds1.rad.spaceforce.mil",
   efm: viaProxy ? "/api/efm" : "https://codiapi-lplws1.rad.spaceforce.mil",
   dataService: "",                      // Cloudflare Worker URL; when set, every API call goes through it
-  efmLow: 500, efmHigh: 1000, aEFM: true, showEFM: true,
+  efmLow: 500, efmHigh: 1000, aEFM: false, showEFM: true,
   tz: "UTC", pollL: 30, pollW: 60, demo: 0,
   window: 30, buffer: 5, aC2G: true, aC2C: true, aNear: false, ringOff: [],
   units: "kt", sfcMax: 30, aSfc: true, aAgl: true, towers: "", ksc: "", ccsfs: "", repeat: 15,
@@ -1238,10 +1238,10 @@ function normEFM(e){ const v=num(e.value); if(v==null) return null; let lat=num(
   if(lat==null || lon==null || !(lat>=28 && lat<=29.3 && lon>=-81.5 && lon<=-80)){ const f=EFM_SITES[efmName(e)]; if(!f) return null; [lat,lon]=f; loc="configured"; }
   const t=parseT((e.reading_date||"")+"T"+(e.reading_time||""));
   return { field_mill:e.field_mill, name:efmName(e), value:v, flag:e.flag||null, lat, lon, t, loc }; }
-function checkEFM(){ if(!S.aEFM) return; const now=Date.now();
+function checkEFM(){ const now=Date.now();   // always tracked for the event log; alerts only when turned on in Settings
   for(const r of efmRows){ const c=efmCat(r.value), prev=efmLvl[r.name]||{c:0,t:0};
     if(c===2 && (prev.c<2 || now-prev.t>S.repeat*60000)){
-      raise({key:"efm:"+r.name, kind:"efm", group:"lightning", level:"strong", title:`Field mill ${r.name} at ${r.value>0?"+":""}${Math.round(r.value).toLocaleString()} V/m`, detail:`At or above the ${S.efmHigh.toLocaleString()} V/m alert level${r.flag?` (status flag ${r.flag})`:""}. Reading ${Number.isFinite(r.t)?hhmmZ(r.t):"time unknown"}.`});
+      if(S.aEFM) raise({key:"efm:"+r.name, kind:"efm", group:"lightning", level:"strong", title:`Field mill ${r.name} at ${r.value>0?"+":""}${Math.round(r.value).toLocaleString()} V/m`, detail:`At or above the ${S.efmHigh.toLocaleString()} V/m alert level${r.flag?` (status flag ${r.flag})`:""}. Reading ${Number.isFinite(r.t)?hhmmZ(r.t):"time unknown"}.`});
       if(prev.c<2) logEvent("lightning","Field mill alert",r.name,`${Math.round(r.value)} V/m (alert level ${S.efmHigh})`);
       efmLvl[r.name]={c:2,t:now}; }
     else if(c<2 && prev.c===2){ logEvent("lightning","Field mill below alert",r.name,`${Math.round(r.value)} V/m`); efmLvl[r.name]={c,t:prev.t}; }
@@ -1303,7 +1303,7 @@ function renderRings(){ const now=Date.now(), W=S.window*60000; let nActive=0;
     else if(!count && st.on){ const n=[...strikes.values()].filter(s=>s.inR.includes(r.name)&&s.t>=st.start).length, dur=Math.round((st.last-st.start)/60000);
       logEvent("lightning","All clear",r.name,`No strikes for ${S.window} min. Last strike ${hhmmssZ(st.last)}Z; ${n} strike${n===1?"":"s"}${dur>=1?` over ${dur} min`:""}`);
       for(const key of ["ring:"+r.name,"near:"+r.name]){ const x=alerts.find(a=>a.key===key); if(x) alerts.splice(alerts.indexOf(x),1); }
-      delete ackHold[r.name];
+      delete ackHold[r.name]; if(typeof storm!=="undefined") delete storm.alerted[r.name];
       if(!off) raise({key:"clear:"+r.name, kind:"clear", group:"lightning", level:"ok", title:`All clear: ${r.name}`, detail:`No strikes in ${S.window} min. Last strike ${hhmmssZ(st.last)}Z.`});
       st.on=false; }
     if(count){ st.last=last; if(!st.start) st.start=first; }
@@ -1558,10 +1558,10 @@ $("#btnTFit").onclick=()=>{ TM.view=null; renderTowerMap(); };
 
 
 /* ---------------- Rendering: strike log ---------------- */
-function renderLog(){ const now=Date.now(); const list=[...strikes.values()].filter(s=>s.inR.length||s.near.length).sort((a,b)=>b.t-a.t).slice(0,200);
+function renderLog(){ const now=Date.now(); const list=[...strikes.values()].filter(s=>s.inR.length).sort((a,b)=>b.t-a.t).slice(0,200);
   const tb=$("#logTable tbody"); tb.innerHTML = list.length? list.map(s=>`<tr><td>${hhmmssZ(s.t)}</td><td>${ago(now-s.t)}</td><td>${s.type==="c2g"?"CG":"CC"}</td><td style="text-align:left;font-family:var(--f-ui)" class="${s.inR.length?"crit":"warn"}">${esc(s.inR.length? s.inR.join(", ") : "near "+s.near.join(", "))}</td><td>${s.lat.toFixed(4)}</td><td>${s.lon.toFixed(4)}</td><td>${s.sig==null?"—":s.sig}</td></tr>`).join("")
-    : `<tr><td colspan="7" class="empty" style="font-family:var(--f-ui)">No strikes in or near the rings in the last ${Math.max(S.window,S.mapWin,60)} minutes.</td></tr>`;
-  $("#logMeta").textContent = `${list.filter(s=>s.inR.length).length} in rings · ${list.filter(s=>!s.inR.length).length} nearby`; }
+    : `<tr><td colspan="7" class="empty" style="font-family:var(--f-ui)">No strikes in the rings in the last ${Math.max(S.window,S.mapWin,60)} minutes.</td></tr>`;
+  $("#logMeta").textContent = `${list.length} strike${list.length===1?"":"s"} in rings`; }
 function renderLightning(){ try{ computeStorms(); }catch(e){} renderRings(); renderMap(); renderLog(); if(measure) renderMeasure(); }
 
 /* ---------------- Rendering: winds ---------------- */
@@ -1784,6 +1784,7 @@ $("#btnSave").onclick=e=>{ e.preventDefault();
   S.pollL=Math.max(10,S.pollL); S.pollW=Math.max(15,S.pollW); const wantDemo=+$("#s_demo").value;
   if(wantDemo!==(+S.demo||0)){ setDemo(!!wantDemo); }
   for(const k of ["aC2G","aC2C","aNear","sound","notif","vib","aSfc","aAgl","etaOn","aEFM"]) S[k]=$("#s_"+k).checked;
+  if(!S.aEFM) for(const a of [...alerts]) if(a.kind==="efm") alerts.splice(alerts.indexOf(a),1);
   { const v=num($("#s_etaMin").value); if(v!=null) S.etaMin=Math.max(1,v); }
   { const advBefore=S.stations+S.afdOffice;
     for(const k of ["frzNear","frzFreeze","frzHard","frzN","frzMin","frzHgt"]){ const v=num($("#s_"+k).value); if(v!=null) S[k]=v; }
@@ -1975,12 +1976,12 @@ function computeStorms(){ const now=Date.now(); storm.at=now; storm.cells=[]; co
   const W=S.window*60000;
   for(const ring of RINGS){ const e=eta[ring.name], active=[...strikes.values()].some(s=>now-s.t<=W && s.inR.includes(ring.name));
     const prev=storm.alerted[ring.name];
-    if(active){ const x=alerts.find(a=>a.key==="eta:"+ring.name); if(x){ alerts.splice(alerts.indexOf(x),1); renderAlerts(); } delete storm.alerted[ring.name]; continue; }
+    if(active){ const x=alerts.find(a=>a.key==="eta:"+ring.name); if(x){ alerts.splice(alerts.indexOf(x),1); renderAlerts(); } if(prev) storm.alerted[ring.name]=now; continue; }   // keep it "already warned" until the ring's all clear
     if(e && e.min<=S.etaMin){ if(!prev && S.etaOn && !S.ringOff.includes(ring.name)){ const m=Math.max(1,Math.round(e.min));
         raise({key:"eta:"+ring.name, kind:"eta", group:"lightning", level:"strong", title:`Storm approaching ${ring.name}`, detail:`Lightning reaches the edge of the ring in about ${m} min. Cell moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt, ${e.cell.n} strikes in the last 25 min.`});
         logEvent("lightning","Storm approaching",ring.name,`Lightning reaches the ring edge in about ${m} min; moving from ${e.cell.from}° at ${Math.round(e.cell.kt)} kt`); }
       storm.alerted[ring.name]=now; }
-    else if(prev && now-prev>10*60000) delete storm.alerted[ring.name]; } }
+    else if(prev && now-prev>60*60000) delete storm.alerted[ring.name]; } }   // one notice per storm: re-arm only after an hour with no storm headed for this ring
 const etaText = name => { const e=storm.eta[name]; if(!e) return ""; return e.min<1? "arriving" : `~${Math.round(e.min)} min`; };
 function drawStorms(c){ if(!S.showMotion) return;
   for(const k of storm.cells){ const [px,py]=proj(k.lat,k.lon), rr=k.r*pxPerNm(k.lat);

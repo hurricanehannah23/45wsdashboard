@@ -1103,10 +1103,15 @@ const towers = {}; // id -> latest row
 let series = []; // for selected tower
 const windLvl = {}; // tower -> {level, t}
 const wv = v => { const n = num(v); return n==null || n>=999 ? null : n; };  // 999 = missing in the WINDS feed
+// Approximate positions for towers whose feed reports 0,0 (pad centers; close enough for the maps and ring/site sorting)
+const TOWER_LL = { "393":[28.6082,-80.6043], "397":[28.6272,-80.6208],     // LC-39A, LC-39B
+  "LC39BNE":[28.6290,-80.6190], "LC39BNW":[28.6290,-80.6226], "LC39BSW":[28.6254,-80.6226],
+  "LC41SE":[28.5818,-80.5816] };   // SLC-41 southeast tower (approximate)   // LC-39B lightning-protection towers (approximate, around the pad)
 function normWind(e){
   const tower = String(e.tower ?? e.tower_id ?? e.station ?? "?").trim();
   let t = parseT(e.reading_datetime ?? e.date ?? e.datetime ?? e.timestamp);
   let lat = num(e.lat), lon = num(e.lon); if(!lat || !lon){ lat = null; lon = null; }  // some towers report 0,0
+  if(lat==null){ const f=TOWER_LL[tower.toUpperCase().replace(/^0+/,"")]; if(f){ [lat,lon]=f; } }        // known pad towers without a reported location
   return { tower, t, dir:wv(e.avg_dir_1min), avg:wv(e.avg_spd_1min), pk1:wv(e.peak_spd_1min), pkdir:wv(e.peak_dir_1min), pk10:wv(e.peak_spd_10min),
     tmp:wv(e.tmp), dp:wv(e.dp), rh:wv(e.rh), hgt:num(e.hgt), lat, lon, dev:wv(e.dev),
     dif:wv(e.dif), pre:wv(e.pre), rainrate:wv(e.rainrate), rainhr:wv(e.rainhr), sltemp:wv(e.sltemp), slmoist:wv(e.slmoist) };
@@ -1511,14 +1516,14 @@ const TM = makeMap($("#tmap"), { draw: drawTowerLayer, fit: towerBox,
   click:(x,y)=>{ const t=hitTower(x,y); if(!t) return; selectTower(t.tower); if(window.innerWidth<900) $("#tdTitle").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); } });
 function renderTowerMap(){ renderView(TM); }
 /* Quick zoom to the launch complexes and airfields */
-const QUICK = [["CX-36 · Blue Origin",["0003"]], ["CX-39A · SpaceX",["0393"]], ["CX-39B · NASA",["0397"]], ["CX-40 · SpaceX",["0110"]], ["CX-41 · ULA",["0110"]],
+const QUICK = [["CX-36 · Blue Origin",["0003"]], ["CX-39A · SpaceX",["0393"]], ["CX-39B · NASA",["LC39BNE","LC39BNW","LC39BSW"]], ["CX-40 · SpaceX",["0110"]], ["CX-41 · ULA",["LC41SE"]],
                ["VAB",["0509"]], ["KXMR",["0303"]], ["KTTS",["0511","0512","0513"]]];
-const sameTower = (a,b) => String(a).replace(/^0+/,"")===String(b).replace(/^0+/,"");
+const sameTower = (a,b) => String(a).trim().toUpperCase().replace(/^0+/,"")===String(b).trim().toUpperCase().replace(/^0+/,"");
 function quickZoom(i, btn){ const [name,ids]=QUICK[i], ts=towerSites().filter(t=>ids.some(id=>sameTower(t.tower,id))), note=$("#qzNote");
   document.querySelectorAll("#qzBar .btn").forEach(b=>b.classList.toggle("on", b===btn));
   const missing=ids.filter(id=>!ts.some(t=>sameTower(t.tower,id)));
   note.hidden=!missing.length; note.textContent = missing.length? `Tower${missing.length>1?"s":""} ${missing.join(", ")} ${missing.length>1?"aren't":"isn't"} reporting a location right now.` : "";
-  if(!ts.length) return;
+  if(!ts.length){ const r=Object.values(towers).find(x=>ids.some(id=>sameTower(x.tower,id))); if(r){ selectTower(r.tower); note.textContent=`Tower ${r.tower} is reporting but has no map location; its readings are in Tower detail.`; } return; }
   use(TM); if(!view){ fitBox(TM.fit()); }
   if(ts.length===1) view={u:U(ts[0].lon), v:V(ts[0].lat), Z:13};
   else { const pad=0.006; fitBox({latMin:Math.min(...ts.map(t=>t.lat))-pad, latMax:Math.max(...ts.map(t=>t.lat))+pad, lonMin:Math.min(...ts.map(t=>t.lon))-pad, lonMax:Math.max(...ts.map(t=>t.lon))+pad}, 0.15); view.Z=Math.min(view.Z,13.5); }

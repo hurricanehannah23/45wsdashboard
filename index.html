@@ -1106,7 +1106,8 @@ const wv = v => { const n = num(v); return n==null || n>=999 ? null : n; };  // 
 // Approximate positions for towers whose feed reports 0,0 (pad centers; close enough for the maps and ring/site sorting)
 const TOWER_LL = { "393":[28.6082,-80.6043], "397":[28.6272,-80.6208],     // LC-39A, LC-39B
   "LC39BNE":[28.6290,-80.6190], "LC39BNW":[28.6290,-80.6226], "LC39BSW":[28.6254,-80.6226],
-  "LC41SE":[28.5818,-80.5816] };   // SLC-41 southeast tower (approximate)   // LC-39B lightning-protection towers (approximate, around the pad)
+  "LC41SE":[28.5818,-80.5816],
+  "LC40SW":[28.5604,-80.5786] };   // SLC-40 southwest tower (approximate)   // SLC-41 southeast tower (approximate)   // LC-39B lightning-protection towers (approximate, around the pad)
 function normWind(e){
   const tower = String(e.tower ?? e.tower_id ?? e.station ?? "?").trim();
   let t = parseT(e.reading_datetime ?? e.date ?? e.datetime ?? e.timestamp);
@@ -1516,7 +1517,7 @@ const TM = makeMap($("#tmap"), { draw: drawTowerLayer, fit: towerBox,
   click:(x,y)=>{ const t=hitTower(x,y); if(!t) return; selectTower(t.tower); if(window.innerWidth<900) $("#tdTitle").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"start"}); } });
 function renderTowerMap(){ renderView(TM); }
 /* Quick zoom to the launch complexes and airfields */
-const QUICK = [["CX-36 · Blue Origin",["0003"]], ["CX-39A · SpaceX",["0393"]], ["CX-39B · NASA",["LC39BNE","LC39BNW","LC39BSW"]], ["CX-40 · SpaceX",["0110"]], ["CX-41 · ULA",["LC41SE"]],
+const QUICK = [["CX-36 · Blue Origin",["0003"]], ["CX-39A · SpaceX",["0211"]], ["CX-39B · NASA",["LC39BNE","LC39BNW","LC39BSW"]], ["CX-40 · SpaceX",["LC40SW"]], ["CX-41 · ULA",["LC41SE"]],
                ["VAB",["0509"]], ["KXMR",["0303"]], ["KTTS",["0511","0512","0513"]]];
 const sameTower = (a,b) => String(a).trim().toUpperCase().replace(/^0+/,"")===String(b).trim().toUpperCase().replace(/^0+/,"");
 function quickZoom(i, btn){ const [name,ids]=QUICK[i], ts=towerSites().filter(t=>ids.some(id=>sameTower(t.tower,id))), note=$("#qzNote");
